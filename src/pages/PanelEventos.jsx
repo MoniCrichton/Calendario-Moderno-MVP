@@ -12,6 +12,7 @@ import {
   orderBy,
   writeBatch
 } from "firebase/firestore";
+import { useNavigate } from "react-router-dom";
 
 export default function PanelEventos() {
   const [evento, setEvento] = useState({
@@ -29,6 +30,8 @@ export default function PanelEventos() {
   const [tiposEventos, setTiposEventos] = useState([]);
   const [eventosFiltrados, setEventosFiltrados] = useState([]);
   const [busqueda, setBusqueda] = useState("");
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     cargarEventos();
@@ -163,10 +166,11 @@ export default function PanelEventos() {
   };
 
   return (
-    <div className="max-w-xl mx-auto p-4">
+    <div className="max-w-xl mx-auto p-4 pb-16 relative">
       <h1 className="text-xl font-bold mb-4">
         {evento.id ? "Editar Evento" : "Cargar Evento"}
       </h1>
+
       <form onSubmit={handleSubmit} className="grid gap-3">
         <input type="text" name="titulo" placeholder="Título" value={evento.titulo} onChange={handleChange} className="border p-2 rounded" required />
         <select name="tipo" value={evento.tipo} onChange={handleChange} className="border p-2 rounded">
@@ -251,6 +255,13 @@ export default function PanelEventos() {
           ))}
         </div>
       )}
+
+      <button
+        onClick={() => navigate("/")}
+        className="fixed bottom-4 left-4 bg-green-600 text-white px-4 py-2 rounded-full shadow-md hover:bg-green-700"
+      >
+        ← Volver
+      </button>
     </div>
   );
 }

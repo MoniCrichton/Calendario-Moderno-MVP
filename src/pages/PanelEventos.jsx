@@ -1,267 +1,222 @@
-import { useState, useEffect } from "react";
-import { db } from "../modules/shared/firebase";
+import { useEffect, useState } from "react";
 import {
-  collection,
-  addDoc,
-  getDocs,
-  updateDoc,
-  deleteDoc,
-  doc,
-  Timestamp,
-  query,
-  orderBy,
-  writeBatch
-} from "firebase/firestore";
+  addMonths,
+  format,
+  startOfMonth,
+  endOfMonth,
+  eachDayOfInterval,
+  isSameDay,
+  isToday,
+  getDate,
+  getDay
+} from "date-fns";
+import { es } from "date-fns/locale";
+import { collection, getDocs, query, orderBy } from "firebase/firestore";
+import { db } from "../modules/shared/firebase";
+import Evento from "../components/Evento";
 import { useNavigate } from "react-router-dom";
+import "../estilos/evento.css";
 
-export default function PanelEventos() {
-  const [evento, setEvento] = useState({
-    id: null,
-    titulo: "",
-    tipo: "",
-    detalles: "",
-    fecha: "",
-    horaInicio: "",
-    horaFin: "",
-    mostrar: "general",
-  });
-
+export default function Calendario({ nivel = null }) {
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [diasDelMes, setDiasDelMes] = useState([]);
   const [eventos, setEventos] = useState([]);
-  const [tiposEventos, setTiposEventos] = useState([]);
-  const [eventosFiltrados, setEventosFiltrados] = useState([]);
-  const [busqueda, setBusqueda] = useState("");
-
+  const [estilosPorTipo, setEstilosPorTipo] = useState({});
+  const [nivelAcceso, setNivelAcceso] = useState(nivel || "publico");
   const navigate = useNavigate();
 
+  const esCelular = window.innerWidth < 640;
+
   useEffect(() => {
-    cargarEventos();
-    cargarTipos();
+    async function fetchEventos() {
+      try {
+        const q = query(collection(db, "eventos"), orderBy("fecha", "asc"));
+        const querySnapshot = await getDocs(q);
+        const eventosCargados = [];
+
+        querySnapshot.forEach((doc) => {
+          const e = doc.data();
+          let fecha;
+          if (e.fecha.toDate) {
+            fecha = e.fecha.toDate();
+            fecha.setHours(12, 0, 0, 0);
+          } else if (typeof e.fecha === "string") {
+            const [anio, mes, dia] = e.fecha.split("-").map(Number);
+            fecha = new Date(anio, mes - 1, dia, 12);
+          } else {
+            fecha = new Date();
+          }
+          eventosCargados.push({ id: doc.id, ...e, fechaObj: fecha });
+        });
+
+        setEventos(eventosCargados);
+      } catch (error) {
+        console.error("Error al cargar eventos:", error);
+      }
+    }
+    fetchEventos();
   }, []);
 
-  const cargarEventos = async () => {
-    const q = query(collection(db, "eventos"), orderBy("fecha", "asc"));
-    const querySnapshot = await getDocs(q);
-    const lista = [];
-    querySnapshot.forEach((docSnap) => {
-      const data = docSnap.data();
-      lista.push({
-        id: docSnap.id,
-        ...data,
-        fecha:
-          typeof data.fecha === "object" && data.fecha.toDate
-            ? data.fecha.toDate().toISOString().split("T")[0]
-            : data.fecha,
-      });
-    });
-    setEventos(lista);
-    setEventosFiltrados(lista);
-  };
-
-  const cargarTipos = async () => {
-    try {
-      const response = await fetch("/data/event_type_styles.json");
-      const json = await response.json();
-      setTiposEventos(json);
-    } catch (error) {
-      console.error("Error cargando tipos de evento:", error);
-    }
-  };
-
-  const handleChange = (e) => {
-    setEvento({ ...evento, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      if (evento.id) {
-        const docRef = doc(db, "eventos", evento.id);
-        await updateDoc(docRef, evento);
-        alert("Evento modificado correctamente");
-      } else {
-        const eventoFinal = {
-          ...evento,
-          creadoEn: Timestamp.now(),
-        };
-        await addDoc(collection(db, "eventos"), eventoFinal);
-        alert("Evento agregado correctamente");
+  useEffect(() => {
+    async function cargarEstilos() {
+      try {
+        const response = await fetch("/data/event_type_styles.json");
+        const json = await response.json();
+        const estilosMap = {};
+        json.forEach((item) => {
+          estilosMap[item.tipo.toLowerCase()] = item;
+        });
+        if (!estilosMap["default"]) {
+          estilosMap["default"] = {
+            emoji: "🗓️",
+            color: "bg-gray-100",
+          };
+        }
+        setEstilosPorTipo(estilosMap);
+      } catch (error) {
+        console.error("Error cargando estilos por tipo:", error);
       }
-      setEvento({
-        id: null,
-        titulo: "",
-        tipo: "",
-        detalles: "",
-        fecha: "",
-        horaInicio: "",
-        horaFin: "",
-        mostrar: "general",
-      });
-      cargarEventos();
-    } catch (error) {
-      alert("Error al guardar evento: " + error.message);
     }
-  };
+    cargarEstilos();
+  }, []);
 
-  const editarEvento = (evento) => {
-    setEvento(evento);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
+  useEffect(() => {
+    const inicio = startOfMonth(currentDate);
+    const fin = endOfMonth(currentDate);
+    const dias = eachDayOfInterval({ start: inicio, end: fin });
 
-  const eliminarEvento = async (id) => {
-    if (confirm("¿Estás seguro de que querés eliminar este evento?")) {
-      await deleteDoc(doc(db, "eventos", id));
-      cargarEventos();
+    if (esCelular) {
+      setDiasDelMes(dias);
+    } else {
+      const dayIndex = getDay(inicio);
+      const diasAntes = (dayIndex + 6) % 7;
+      const padding = Array.from({ length: diasAntes }, () => null);
+      const diasConPadding = [...padding, ...dias];
+      const totalCeldas = diasConPadding.length;
+      const faltantes = (7 - (totalCeldas % 7)) % 7;
+      const paddingFinal = Array.from({ length: faltantes }, () => null);
+      setDiasDelMes([...diasConPadding, ...paddingFinal]);
     }
+
+    const hoy = new Date();
+    if (
+      inicio.getMonth() === hoy.getMonth() &&
+      inicio.getFullYear() === hoy.getFullYear()
+    ) {
+      setTimeout(() => {
+        const hoyId = `dia-${getDate(hoy)}`;
+        const el = document.getElementById(hoyId);
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 300);
+    }
+  }, [currentDate]);
+
+  const cambiarMes = (offset) => {
+    setCurrentDate((prev) => addMonths(prev, offset));
   };
 
-  const reemplazarTipo = async (tipoActual, tipoNuevo) => {
-    const confirmacion = confirm(
-      `¿Querés reemplazar todos los eventos del tipo "${tipoActual}" por "${tipoNuevo}"?`
-    );
-    if (!confirmacion) return;
-
-    const q = query(collection(db, "eventos"));
-    const querySnapshot = await getDocs(q);
-    const batch = writeBatch(db);
-
-    querySnapshot.forEach((docSnap) => {
-      const data = docSnap.data();
-      if (data.tipo === tipoActual) {
-        batch.update(doc(db, "eventos", docSnap.id), { tipo: tipoNuevo });
-      }
-    });
-
-    await batch.commit();
-    alert(`Se reemplazó "${tipoActual}" por "${tipoNuevo}" en todos los eventos.`);
-    cargarEventos();
+  const puedeVerEvento = (nivelMostrar) => {
+    if (!nivelMostrar || nivelMostrar === "general") return true;
+    if (nivelMostrar === "socios") return nivelAcceso === "socio" || nivelAcceso === "junta";
+    if (nivelMostrar === "junta") return nivelAcceso === "junta";
+    return false;
   };
 
-  const obtenerEmojiPorTipo = (tipo) => {
-    const encontrado = tiposEventos.find((t) => t.tipo === tipo);
-    return encontrado ? encontrado.emoji : "";
-  };
-
-  const tiposUsados = Array.from(
-    new Set(eventos.map((e) => e.tipo).filter((t) => t))
-  ).sort();
-
-  const filtrarEventos = ({ tipo, mostrar, sinTipo }) => {
-    let resultado = eventos;
-    if (tipo) resultado = resultado.filter((e) => e.tipo === tipo);
-    if (mostrar) resultado = resultado.filter((e) => e.mostrar === mostrar);
-    if (sinTipo) resultado = resultado.filter((e) => !e.tipo || e.tipo.trim() === "");
-    setEventosFiltrados(resultado);
-  };
-
-  const filtrarPorBusqueda = () => {
-    const texto = busqueda.toLowerCase();
-    const resultado = eventos.filter((e) => {
-      return (
-        e.titulo.toLowerCase().includes(texto) ||
-        (e.detalles && e.detalles.toLowerCase().includes(texto)) ||
-        (e.tipo && e.tipo.toLowerCase().includes(texto))
-      );
-    });
-    setEventosFiltrados(resultado);
-  };
+  const hoy = new Date();
 
   return (
-    <div className="max-w-xl mx-auto p-4 pb-16 relative">
-      <h1 className="text-xl font-bold mb-4">
-        {evento.id ? "Editar Evento" : "Cargar Evento"}
-      </h1>
-
-      <form onSubmit={handleSubmit} className="grid gap-3">
-        <input type="text" name="titulo" placeholder="Título" value={evento.titulo} onChange={handleChange} className="border p-2 rounded" required />
-        <select name="tipo" value={evento.tipo} onChange={handleChange} className="border p-2 rounded">
-          <option value="">Seleccionar tipo</option>
-          {tiposEventos.map((tipo) => (
-            <option key={tipo.tipo} value={tipo.tipo}>
-              {tipo.emoji} {tipo.tipo}
-            </option>
-          ))}
-        </select>
-        <input type="text" name="detalles" placeholder="Detalles" value={evento.detalles} onChange={handleChange} className="border p-2 rounded" />
-        <input type="date" name="fecha" value={evento.fecha} onChange={handleChange} className="border p-2 rounded" required />
-        <input type="time" name="horaInicio" value={evento.horaInicio} onChange={handleChange} className="border p-2 rounded" />
-        <input type="time" name="horaFin" value={evento.horaFin} onChange={handleChange} className="border p-2 rounded" />
-        <select name="mostrar" value={evento.mostrar} onChange={handleChange} className="border p-2 rounded">
-          <option value="general">Público</option>
-          <option value="socios">Socios</option>
-          <option value="junta">Junta</option>
-        </select>
-        <button type="submit" className="bg-blue-600 text-white p-2 rounded">
-          {evento.id ? "Actualizar" : "Guardar"} evento
-        </button>
-      </form>
-
-      <h2 className="text-lg font-bold mt-6 mb-2">Filtros rápidos</h2>
-      <div className="mb-2 flex flex-wrap gap-2">
-        {tiposUsados.map((tipo) => (
-          <button key={tipo} onClick={() => filtrarEventos({ tipo })} className="bg-gray-100 px-3 py-1 rounded">
-            {obtenerEmojiPorTipo(tipo)} {tipo}
-          </button>
-        ))}
-        <button onClick={() => filtrarEventos({ sinTipo: true })} className="bg-yellow-100 px-3 py-1 rounded">
-          Sin tipo
-        </button>
-        <button onClick={() => setEventosFiltrados(eventos)} className="bg-gray-200 px-3 py-1 rounded">
-          Mostrar todos
-        </button>
-      </div>
-
-      <div className="mb-4">
-        <input
-          type="text"
-          placeholder="Buscar por título, tipo o detalles"
-          value={busqueda}
-          onChange={(e) => setBusqueda(e.target.value)}
-          className="border p-2 rounded w-full"
-        />
-        <button
-          onClick={filtrarPorBusqueda}
-          className="mt-2 w-full bg-blue-500 text-white py-1 rounded"
-        >
-          Buscar
-        </button>
-      </div>
-
-      {eventosFiltrados.length > 0 && (
-        <div className="mt-6 space-y-2">
-          {eventosFiltrados.map((e) => (
-            <div key={e.id} className="border p-2 rounded shadow-sm flex flex-col gap-1">
-              <div className="text-sm font-semibold">
-                {e.fecha} – {e.titulo}
-              </div>
-              <div className="text-xs text-gray-600">
-                {obtenerEmojiPorTipo(e.tipo)} {e.tipo} | {e.mostrar}
-              </div>
-              <div className="text-xs text-gray-500">{e.detalles}</div>
-              <div className="flex gap-2 mt-1">
-                <button
-                  onClick={() => editarEvento(e)}
-                  className="bg-yellow-400 px-2 py-1 rounded text-xs"
-                >
-                  Editar
-                </button>
-                <button
-                  onClick={() => eliminarEvento(e.id)}
-                  className="bg-red-500 px-2 py-1 rounded text-xs text-white"
-                >
-                  Eliminar
-                </button>
-              </div>
-            </div>
-          ))}
+    <div className="relative p-4">
+      {!nivel && (
+        <div className="mb-4 flex items-center gap-2">
+          <label htmlFor="nivel" className="font-semibold">
+            Ver como:
+          </label>
+          <select
+            id="nivel"
+            value={nivelAcceso}
+            onChange={(e) => setNivelAcceso(e.target.value)}
+            className="border p-1 rounded"
+          >
+            <option value="publico">Público</option>
+            <option value="socio">Socio</option>
+            <option value="junta">Junta</option>
+          </select>
         </div>
       )}
 
+      {nivelAcceso === "junta" && (
+        <button
+          onClick={() => navigate("/admin")}
+          className="fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-full shadow-md hover:bg-blue-700"
+        >
+          + Evento
+        </button>
+      )}
+
       <button
-        onClick={() => navigate("/")}
-        className="fixed bottom-4 left-4 bg-green-600 text-white px-4 py-2 rounded-full shadow-md hover:bg-green-700"
+        onClick={() => cambiarMes(-1)}
+        className="fixed left-2 top-1/2 -translate-y-1/2 bg-gray-200 px-2 py-1 rounded shadow"
       >
-        ← Volver
+        ←
       </button>
+      <button
+        onClick={() => cambiarMes(1)}
+        className="fixed right-2 top-1/2 -translate-y-1/2 bg-gray-200 px-2 py-1 rounded shadow"
+      >
+        →
+      </button>
+
+      <h2 className="text-2xl font-bold mb-4 text-center">
+        {format(currentDate, "MMMM yyyy", { locale: es })}
+      </h2>
+
+      <div className={`grid gap-2 ${esCelular ? "grid-cols-2" : "grid-cols-7"}`}>
+        {diasDelMes.map((dia, index) => (
+          <div
+            key={index}
+            id={dia ? `dia-${getDate(dia)}` : `vacio-${index}`}
+            className={`min-h-[6rem] border p-2 rounded shadow-sm text-center transition-all duration-300 ${
+              dia && isToday(dia) ? "ring-2 ring-blue-500 bg-blue-50 animate-pulse" : "bg-white"
+            }`}
+          >
+            <div className="text-xs text-gray-500">
+              {dia ? format(dia, "eee dd", { locale: es }) : ""}
+            </div>
+            {dia && eventos
+              .filter((e) => isSameDay(e.fechaObj, dia))
+              .filter((e) => puedeVerEvento(e.mostrar))
+              .sort((a, b) => {
+                const ha = a.horaInicio || "00:00";
+                const hb = b.horaInicio || "00:00";
+                return ha.localeCompare(hb);
+              })
+              .map((evento) => {
+                const tipo = evento.tipo?.toLowerCase() || "default";
+                const estilo = estilosPorTipo[tipo] || estilosPorTipo["default"];
+                return (
+                  <div key={evento.id}>
+                    {nivelAcceso === "junta" && evento.mostrar === "junta" && (
+                      <div className="text-[0.65rem] font-bold text-red-500 uppercase mb-1">
+                        🔒 Vista: Junta
+                      </div>
+                    )}
+                    {nivelAcceso === "junta" && evento.mostrar === "socios" && (
+                      <div className="text-[0.65rem] font-bold text-yellow-600 uppercase mb-1">
+                        🔐 Vista: Socios
+                      </div>
+                    )}
+                    {nivelAcceso === "junta" && (!evento.mostrar || evento.mostrar === "general") && (
+                      <div className="text-[0.65rem] font-bold text-green-600 uppercase mb-1">
+                        🌐 Vista: Público
+                      </div>
+                    )}
+                    <Evento evento={evento} estilo={estilo} />
+                  </div>
+                );
+              })}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

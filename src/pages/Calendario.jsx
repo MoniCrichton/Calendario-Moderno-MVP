@@ -8,7 +8,7 @@ import {
   isSameDay,
   isToday,
   getDate,
-  getDay
+  getDay,
 } from "date-fns";
 import { es } from "date-fns/locale";
 import { collection, getDocs, query, orderBy } from "firebase/firestore";
@@ -22,10 +22,17 @@ export default function Calendario({ nivel = null }) {
   const [diasDelMes, setDiasDelMes] = useState([]);
   const [eventos, setEventos] = useState([]);
   const [estilosPorTipo, setEstilosPorTipo] = useState({});
+  const [nivelAcceso, setNivelAcceso] = useState(nivel || "publico");
   const navigate = useNavigate();
 
   const esCelular = window.innerWidth < 640;
-  const nivelAcceso = "publico"; // ✅ FORZADO A "publico"
+
+  // 🔁 Sincronizar prop "nivel" con el estado
+  useEffect(() => {
+    if (nivel) {
+      setNivelAcceso(nivel);
+    }
+  }, [nivel]);
 
   useEffect(() => {
     async function fetchEventos() {
@@ -116,14 +123,36 @@ export default function Calendario({ nivel = null }) {
   };
 
   const puedeVerEvento = (nivelMostrar) => {
-    return !nivelMostrar || nivelMostrar === "general";
+    if (!nivelMostrar || nivelMostrar === "general") return true;
+    if (nivelMostrar === "socios")
+      return nivelAcceso === "socio" || nivelAcceso === "junta";
+    if (nivelMostrar === "junta") return nivelAcceso === "junta";
+    return false;
   };
 
   const hoy = new Date();
 
   return (
     <div className="relative p-4">
-      {nivel === "junta" && (
+      {!nivel && (
+        <div className="mb-4 flex items-center gap-2">
+          <label htmlFor="nivel" className="font-semibold">
+            Ver como:
+          </label>
+          <select
+            id="nivel"
+            value={nivelAcceso}
+            onChange={(e) => setNivelAcceso(e.target.value)}
+            className="border p-1 rounded"
+          >
+            <option value="publico">Público</option>
+            <option value="socio">Socio</option>
+            <option value="junta">Junta</option>
+          </select>
+        </div>
+      )}
+
+      {nivelAcceso === "junta" && (
         <button
           onClick={() => navigate("/admin")}
           className="fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-full shadow-md hover:bg-blue-700"
@@ -155,25 +184,52 @@ export default function Calendario({ nivel = null }) {
             key={index}
             id={dia ? `dia-${getDate(dia)}` : `vacio-${index}`}
             className={`min-h-[6rem] border p-2 rounded shadow-sm text-center transition-all duration-300 ${
-              dia && isToday(dia) ? "ring-2 ring-blue-500 bg-blue-50 animate-pulse" : "bg-white"
+              dia && isToday(dia)
+                ? "ring-2 ring-blue-500 bg-blue-50 animate-pulse"
+                : "bg-white"
             }`}
           >
             <div className="text-xs text-gray-500">
               {dia ? format(dia, "eee dd", { locale: es }) : ""}
             </div>
-            {dia && eventos
-              .filter((e) => isSameDay(e.fechaObj, dia))
-              .filter((e) => puedeVerEvento(e.mostrar))
-              .sort((a, b) => {
-                const ha = a.horaInicio || "00:00";
-                const hb = b.horaInicio || "00:00";
-                return ha.localeCompare(hb);
-              })
-              .map((evento) => {
-                const tipo = evento.tipo?.toLowerCase() || "default";
-                const estilo = estilosPorTipo[tipo] || estilosPorTipo["default"];
-                return <Evento key={evento.id} evento={evento} estilo={estilo} />;
-              })}
+            {dia &&
+              eventos
+                .filter((e) => isSameDay(e.fechaObj, dia))
+                .filter((e) => puedeVerEvento(e.mostrar))
+                .sort((a, b) => {
+                  const ha = a.horaInicio || "00:00";
+                  const hb = b.horaInicio || "00:00";
+                  return ha.localeCompare(hb);
+                })
+                .map((evento) => {
+                  const tipo = evento.tipo?.toLowerCase() || "default";
+                  const estilo =
+                    estilosPorTipo[tipo] || estilosPorTipo["default"];
+                  return (
+                    <div key={evento.id}>
+                      {nivelAcceso === "junta" &&
+                        evento.mostrar === "junta" && (
+                          <div className="text-[0.65rem] font-bold text-red-500 uppercase mb-1">
+                            🔒 Vista: Junta
+                          </div>
+                        )}
+                      {nivelAcceso === "junta" &&
+                        evento.mostrar === "socios" && (
+                          <div className="text-[0.65rem] font-bold text-yellow-600 uppercase mb-1">
+                            🔐 Vista: Socios
+                          </div>
+                        )}
+                      {nivelAcceso === "junta" &&
+                        (!evento.mostrar ||
+                          evento.mostrar === "general") && (
+                          <div className="text-[0.65rem] font-bold text-green-600 uppercase mb-1">
+                            🌐 Vista: Público
+                          </div>
+                        )}
+                      <Evento evento={evento} estilo={estilo} />
+                    </div>
+                  );
+                })}
           </div>
         ))}
       </div>

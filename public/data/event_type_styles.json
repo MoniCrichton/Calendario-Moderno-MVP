@@ -1,0 +1,107 @@
+[
+  {
+    "tipo": "cumpleaños",
+    "emoji": "🎂",
+    "color": "#00FA9A"
+  },
+  {
+    "tipo": "aniversario",
+    "emoji": "🎂",
+    "color": "#00FA9A"
+  },
+  {
+    "tipo": "feriado",
+    "emoji": "🇦🇷",
+    "color": "#87CEEB"
+  },
+  {
+    "tipo": "efeméride",
+    "emoji": "📅",
+    "color": "#E6E6FA"
+  },
+  {
+    "tipo": "reunión",
+    "emoji": "👥",
+    "color": "#C2EABD"
+  },
+  {
+    "tipo": "cena",
+    "emoji": "🍽️",
+    "color": "#FAD0E6"
+  },
+  {
+    "tipo": "actividad membresia",
+    "emoji": "🧩",
+    "color": "#FFA500"
+  },
+  {
+    "tipo": "evento",
+    "emoji": "📌",
+    "color": "#CCCCCC"
+  },
+  {
+    "tipo": "conferencia",
+    "emoji": "🎤",
+    "color": "#D2D0F0"
+  },
+  {
+    "tipo": "deportes y valores",
+    "emoji": "🏆",
+    "color": "#A2DED0"
+  },
+  {
+    "tipo": "ryla",
+    "emoji": "🚀",
+    "color": "#A6BDFE"
+  },
+  {
+    "tipo": "capacitaciones",
+    "emoji": "📚",
+    "color": "#40E0D0"
+  },
+  {
+    "tipo": "interact",
+    "emoji": "👧👦",
+    "color": "#00CED1"
+  },
+  {
+    "tipo": "rotaract",
+    "emoji": "🤝",
+    "color": "#FF8C00"
+  },
+  {
+    "tipo": "instituto",
+    "emoji": "🕋",
+    "color": "#6A9ACD"
+  },
+  {
+    "tipo": "rotary Internacional",
+    "emoji": "🔵⚙️",
+    "color": "#F7A81B"
+  },
+  {
+    "tipo": "servicio",
+    "emoji": "🫱🤝🫲",
+    "color": "#FFE4B2"
+  },
+  {
+    "tipo": "intercambio",
+    "emoji": "🌍✈️",
+    "color": "#D4E3FC"
+  },
+  {
+    "tipo": "Empoderamiento de NNA",
+    "emoji": "👶",
+    "color": "#fafa"
+  },
+  {
+    "tipo": "distrito",
+    "emoji": "🗺️",
+    "color": "#B0C4DE"
+  },
+  {
+    "tipo": "default",
+    "emoji": "🗓️",
+    "color": "#E0E0E0"
+  }
+]

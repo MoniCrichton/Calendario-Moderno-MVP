@@ -1,5 +1,5 @@
 import React from "react";
-import Calendario from "../pages/Calendario";
+import Calendario from "./Calendario";
 
 export default function Home() {
   return (

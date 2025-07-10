@@ -24,6 +24,7 @@ export default function Calendario({ nivel = null }) {
   const [estilosPorTipo, setEstilosPorTipo] = useState({});
   const [nivelAcceso, setNivelAcceso] = useState(nivel || "publico");
   const navigate = useNavigate();
+
   const esCelular = window.innerWidth < 640;
 
   useEffect(() => {
@@ -90,13 +91,10 @@ export default function Calendario({ nivel = null }) {
       const dayIndex = getDay(inicio);
       const diasAntes = (dayIndex + 6) % 7;
       const padding = Array.from({ length: diasAntes }, () => null);
-
       const diasConPadding = [...padding, ...dias];
-
       const totalCeldas = diasConPadding.length;
       const faltantes = (7 - (totalCeldas % 7)) % 7;
       const paddingFinal = Array.from({ length: faltantes }, () => null);
-
       setDiasDelMes([...diasConPadding, ...paddingFinal]);
     }
 
@@ -195,7 +193,26 @@ export default function Calendario({ nivel = null }) {
               .map((evento) => {
                 const tipo = evento.tipo?.toLowerCase() || "default";
                 const estilo = estilosPorTipo[tipo] || estilosPorTipo["default"];
-                return <Evento key={evento.id} evento={evento} estilo={estilo} />;
+                return (
+                  <div key={evento.id}>
+                    {nivelAcceso === "junta" && evento.mostrar === "junta" && (
+                      <div className="text-[0.65rem] font-bold text-red-500 uppercase mb-1">
+                        🔒 Vista: Junta
+                      </div>
+                    )}
+                    {nivelAcceso === "junta" && evento.mostrar === "socios" && (
+                      <div className="text-[0.65rem] font-bold text-yellow-600 uppercase mb-1">
+                        🔐 Vista: Socios
+                      </div>
+                    )}
+                    {nivelAcceso === "junta" && (!evento.mostrar || evento.mostrar === "general") && (
+                      <div className="text-[0.65rem] font-bold text-green-600 uppercase mb-1">
+                        🌐 Vista: Público
+                      </div>
+                    )}
+                    <Evento evento={evento} estilo={estilo} />
+                  </div>
+                );
               })}
           </div>
         ))}

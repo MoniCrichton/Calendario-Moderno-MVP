@@ -24,6 +24,7 @@ export default function Calendario({ nivel = null }) {
   const [estilosPorTipo, setEstilosPorTipo] = useState({});
   const [nivelAcceso, setNivelAcceso] = useState(nivel || "publico");
   const navigate = useNavigate();
+  const esCelular = window.innerWidth < 640;
 
   useEffect(() => {
     async function fetchEventos() {
@@ -34,10 +35,17 @@ export default function Calendario({ nivel = null }) {
 
         querySnapshot.forEach((doc) => {
           const e = doc.data();
-          let fecha = e.fecha.toDate ? e.fecha.toDate() : new Date(e.fecha);
-            // Forzar hora 12:00 para evitar errores por zona horaria
+          let fecha;
+          if (e.fecha.toDate) {
+            fecha = e.fecha.toDate();
             fecha.setHours(12, 0, 0, 0);
-            eventosCargados.push({ id: doc.id, ...e, fechaObj: fecha });
+          } else if (typeof e.fecha === "string") {
+            const [anio, mes, dia] = e.fecha.split("-").map(Number);
+            fecha = new Date(anio, mes - 1, dia, 12);
+          } else {
+            fecha = new Date();
+          }
+          eventosCargados.push({ id: doc.id, ...e, fechaObj: fecha });
         });
 
         setEventos(eventosCargados);
@@ -76,17 +84,21 @@ export default function Calendario({ nivel = null }) {
     const fin = endOfMonth(currentDate);
     const dias = eachDayOfInterval({ start: inicio, end: fin });
 
-    const dayIndex = getDay(inicio);
-    const diasAntes = (dayIndex + 6) % 7;
-    const padding = Array.from({ length: diasAntes }, () => null);
+    if (esCelular) {
+      setDiasDelMes(dias);
+    } else {
+      const dayIndex = getDay(inicio);
+      const diasAntes = (dayIndex + 6) % 7;
+      const padding = Array.from({ length: diasAntes }, () => null);
 
-    const diasConPadding = [...padding, ...dias];
+      const diasConPadding = [...padding, ...dias];
 
-    const totalCeldas = diasConPadding.length;
-    const faltantes = (7 - (totalCeldas % 7)) % 7;
-    const paddingFinal = Array.from({ length: faltantes }, () => null);
+      const totalCeldas = diasConPadding.length;
+      const faltantes = (7 - (totalCeldas % 7)) % 7;
+      const paddingFinal = Array.from({ length: faltantes }, () => null);
 
-    setDiasDelMes([...diasConPadding, ...paddingFinal]);
+      setDiasDelMes([...diasConPadding, ...paddingFinal]);
+    }
 
     const hoy = new Date();
     if (
@@ -113,7 +125,6 @@ export default function Calendario({ nivel = null }) {
   };
 
   const hoy = new Date();
-  const esCelular = window.innerWidth < 640;
 
   return (
     <div className="relative p-4">

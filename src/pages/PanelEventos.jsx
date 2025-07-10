@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { db } from "../modules/shared/firebase";
 import {
   collection,
   addDoc,
@@ -6,13 +7,13 @@ import {
   deleteDoc,
   doc,
   updateDoc,
+  Timestamp,
   query,
   orderBy,
 } from "firebase/firestore";
-import { db } from "../modules/shared/firebase";
-import { format } from "date-fns";
 
 export default function PanelEventos() {
+  const [eventos, setEventos] = useState([]);
   const [titulo, setTitulo] = useState("");
   const [tipo, setTipo] = useState("");
   const [detalles, setDetalles] = useState("");
@@ -20,43 +21,31 @@ export default function PanelEventos() {
   const [horaInicio, setHoraInicio] = useState("");
   const [horaFin, setHoraFin] = useState("");
   const [mostrar, setMostrar] = useState("general");
-  const [eventos, setEventos] = useState([]);
-  const [tiposDisponibles, setTiposDisponibles] = useState([]);
-  const [editandoId, setEditandoId] = useState(null);
+  const [idEditar, setIdEditar] = useState(null);
+  const [tiposUnicos, setTiposUnicos] = useState([]);
 
   useEffect(() => {
-    cargarEventos();
-    cargarTipos();
+    async function fetchEventos() {
+      const q = query(collection(db, "eventos"), orderBy("fecha", "asc"));
+      const snapshot = await getDocs(q);
+      const lista = [];
+      const tipos = new Set();
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        lista.push({ id: doc.id, ...data });
+        if (data.tipo) tipos.add(data.tipo);
+      });
+      setEventos(lista);
+      setTiposUnicos(Array.from(tipos));
+    }
+    fetchEventos();
   }, []);
 
-  const cargarEventos = async () => {
-    const q = query(collection(db, "eventos"), orderBy("fecha", "desc"));
-    const querySnapshot = await getDocs(q);
-    const lista = querySnapshot.docs.map((doc) => {
-      const data = doc.data();
-      let fechaObj;
-      if (data.fecha.toDate) {
-        fechaObj = data.fecha.toDate();
-      } else {
-        const [anio, mes, dia] = data.fecha.split("-").map(Number);
-        fechaObj = new Date(anio, mes - 1, dia);
-      }
-      return { id: doc.id, ...data, fechaObj };
-    });
-    setEventos(lista);
-  };
-
-  const cargarTipos = async () => {
-    const response = await fetch("/data/event_type_styles.json");
-    const json = await response.json();
-    setTiposDisponibles(json);
-  };
-
-  const handleSubmit = async (e) => {
+  async function guardarEvento(e) {
     e.preventDefault();
-    if (!titulo || !tipo || !fecha) return;
+    if (!titulo || !tipo || !fecha) return alert("Faltan campos obligatorios");
 
-    const evento = {
+    const nuevoEvento = {
       titulo,
       tipo,
       detalles,
@@ -65,132 +54,99 @@ export default function PanelEventos() {
       horaFin,
       mostrar,
       enviadoPor: "Moni",
+      creadoEn: Timestamp.now(),
     };
 
-    if (editandoId) {
-      await updateDoc(doc(db, "eventos", editandoId), evento);
+    if (idEditar) {
+      await updateDoc(doc(db, "eventos", idEditar), nuevoEvento);
     } else {
-      await addDoc(collection(db, "eventos"), evento);
+      await addDoc(collection(db, "eventos"), nuevoEvento);
     }
 
-    setTitulo("");
-    setTipo("");
-    setDetalles("");
-    setFecha("");
-    setHoraInicio("");
-    setHoraFin("");
-    setMostrar("general");
-    setEditandoId(null);
-    cargarEventos();
-  };
+    window.location.reload();
+  }
 
-  const eliminarEvento = async (id) => {
-    await deleteDoc(doc(db, "eventos", id));
-    cargarEventos();
-  };
-
-  const editarEvento = (evento) => {
-    setTitulo(evento.titulo);
-    setTipo(evento.tipo);
-    setDetalles(evento.detalles || "");
-    setFecha(evento.fecha);
-    setHoraInicio(evento.horaInicio || "");
-    setHoraFin(evento.horaFin || "");
-    setMostrar(evento.mostrar || "general");
-    setEditandoId(evento.id);
-  };
-
-  const corregirTipo = async (tipoIncorrecto, tipoCorrecto) => {
-    const eventosFiltrados = eventos.filter((e) => e.tipo === tipoIncorrecto);
-    for (const e of eventosFiltrados) {
-      await updateDoc(doc(db, "eventos", e.id), { tipo: tipoCorrecto });
+  async function borrarEvento(id) {
+    if (confirm("¿Seguro que querés eliminar este evento?")) {
+      await deleteDoc(doc(db, "eventos", id));
+      window.location.reload();
     }
-    cargarEventos();
-  };
+  }
 
-  const tiposUsados = Array.from(new Set(eventos.map((e) => e.tipo))).sort();
-  const tiposValidos = tiposDisponibles.map((t) => t.tipo);
-  const tiposErroneos = tiposUsados.filter((t) => !tiposValidos.includes(t));
+  function editarEvento(e) {
+    setIdEditar(e.id);
+    setTitulo(e.titulo);
+    setTipo(e.tipo);
+    setDetalles(e.detalles || "");
+    setFecha(e.fecha);
+    setHoraInicio(e.horaInicio || "");
+    setHoraFin(e.horaFin || "");
+    setMostrar(e.mostrar || "general");
+  }
 
   return (
-    <div className="p-4 max-w-3xl mx-auto">
+    <div className="p-4 max-w-4xl mx-auto">
       <h2 className="text-xl font-bold mb-4">Cargar o modificar evento</h2>
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-        <input
-          placeholder="Título"
-          value={titulo}
-          onChange={(e) => setTitulo(e.target.value)}
-          className="border p-2 rounded"
-        />
-        <select
-          value={tipo}
-          onChange={(e) => setTipo(e.target.value)}
-          className="border p-2 rounded"
-        >
+      <form onSubmit={guardarEvento} className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-8">
+        <input value={titulo} onChange={(e) => setTitulo(e.target.value)} placeholder="Título" className="border p-2" />
+        <select value={tipo} onChange={(e) => setTipo(e.target.value)} className="border p-2">
           <option value="">Tipo de evento</option>
-          {tiposDisponibles.map((t) => (
-            <option key={t.tipo} value={t.tipo}>
-              {t.emoji} {t.tipo}
-            </option>
+          {tiposUnicos.map((t) => (
+            <option key={t} value={t}>{t}</option>
           ))}
         </select>
-        <input
-          type="date"
-          value={fecha}
-          onChange={(e) => setFecha(e.target.value)}
-          className="border p-2 rounded"
-        />
-        <input
-          placeholder="Detalles"
-          value={detalles}
-          onChange={(e) => setDetalles(e.target.value)}
-          className="border p-2 rounded"
-        />
-        <input
-          type="time"
-          value={horaInicio}
-          onChange={(e) => setHoraInicio(e.target.value)}
-          className="border p-2 rounded"
-        />
-        <input
-          type="time"
-          value={horaFin}
-          onChange={(e) => setHoraFin(e.target.value)}
-          className="border p-2 rounded"
-        />
-        <select
-          value={mostrar}
-          onChange={(e) => setMostrar(e.target.value)}
-          className="border p-2 rounded"
-        >
+        <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} className="border p-2" />
+        <input value={detalles} onChange={(e) => setDetalles(e.target.value)} placeholder="Detalles" className="border p-2" />
+        <input type="time" value={horaInicio} onChange={(e) => setHoraInicio(e.target.value)} className="border p-2" />
+        <input type="time" value={horaFin} onChange={(e) => setHoraFin(e.target.value)} className="border p-2" />
+        <select value={mostrar} onChange={(e) => setMostrar(e.target.value)} className="border p-2">
           <option value="general">Público</option>
           <option value="socios">Socios</option>
           <option value="junta">Junta</option>
         </select>
-        <button className="bg-blue-600 text-white p-2 rounded col-span-1 sm:col-span-2">
-          {editandoId ? "Guardar cambios" : "Agregar evento"}
+        <button type="submit" className="bg-blue-600 text-white p-2 rounded col-span-full">
+          {idEditar ? "Actualizar evento" : "Agregar evento"}
         </button>
       </form>
 
-      {tiposErroneos.length > 0 && (
-        <div className="mt-8">
-          <h3 className="font-bold mb-2">Tipos incorrectos detectados:</h3>
-          <div className="flex flex-wrap gap-2">
-            {tiposErroneos.map((tipo) => (
-              <button
-                key={tipo}
-                onClick={() => {
-                  const sugerencia = prompt(`¿Cómo debería llamarse "${tipo}"?`);
-                  if (sugerencia) corregirTipo(tipo, sugerencia);
-                }}
-                className="px-2 py-1 bg-red-200 rounded"
-              >
-                {tipo}
-              </button>
+      <h2 className="text-xl font-bold mb-2">Lista de eventos</h2>
+      <div className="overflow-auto max-h-[40vh] border rounded">
+        <table className="min-w-full text-sm">
+          <thead className="bg-gray-100 sticky top-0">
+            <tr>
+              <th className="p-2 text-left">Fecha</th>
+              <th className="p-2 text-left">Título</th>
+              <th className="p-2 text-left">Tipo</th>
+              <th className="p-2 text-left">Mostrar</th>
+              <th className="p-2">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {eventos.map((e) => (
+              <tr key={e.id} className="border-t">
+                <td className="p-2 whitespace-nowrap">{e.fecha}</td>
+                <td className="p-2">{e.titulo}</td>
+                <td className="p-2">{e.tipo}</td>
+                <td className="p-2 text-center">{e.mostrar || "general"}</td>
+                <td className="p-2 flex gap-2">
+                  <button
+                    onClick={() => editarEvento(e)}
+                    className="text-blue-600 hover:underline"
+                  >
+                    Editar
+                  </button>
+                  <button
+                    onClick={() => borrarEvento(e.id)}
+                    className="text-red-600 hover:underline"
+                  >
+                    Borrar
+                  </button>
+                </td>
+              </tr>
             ))}
-          </div>
-        </div>
-      )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

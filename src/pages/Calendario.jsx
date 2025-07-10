@@ -22,10 +22,10 @@ export default function Calendario({ nivel = null }) {
   const [diasDelMes, setDiasDelMes] = useState([]);
   const [eventos, setEventos] = useState([]);
   const [estilosPorTipo, setEstilosPorTipo] = useState({});
-  const [nivelAcceso, setNivelAcceso] = useState(nivel || "publico");
   const navigate = useNavigate();
 
   const esCelular = window.innerWidth < 640;
+  const nivelAcceso = "publico"; // ✅ FORZADO A "publico"
 
   useEffect(() => {
     async function fetchEventos() {
@@ -116,35 +116,14 @@ export default function Calendario({ nivel = null }) {
   };
 
   const puedeVerEvento = (nivelMostrar) => {
-    if (!nivelMostrar || nivelMostrar === "general") return true;
-    if (nivelMostrar === "socios") return nivelAcceso === "socio" || nivelAcceso === "junta";
-    if (nivelMostrar === "junta") return nivelAcceso === "junta";
-    return false;
+    return !nivelMostrar || nivelMostrar === "general";
   };
 
   const hoy = new Date();
 
   return (
     <div className="relative p-4">
-      {!nivel && (
-        <div className="mb-4 flex items-center gap-2">
-          <label htmlFor="nivel" className="font-semibold">
-            Ver como:
-          </label>
-          <select
-            id="nivel"
-            value={nivelAcceso}
-            onChange={(e) => setNivelAcceso(e.target.value)}
-            className="border p-1 rounded"
-          >
-            <option value="publico">Público</option>
-            <option value="socio">Socio</option>
-            <option value="junta">Junta</option>
-          </select>
-        </div>
-      )}
-
-      {nivelAcceso === "junta" && (
+      {nivel === "junta" && (
         <button
           onClick={() => navigate("/admin")}
           className="fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-full shadow-md hover:bg-blue-700"
@@ -193,26 +172,7 @@ export default function Calendario({ nivel = null }) {
               .map((evento) => {
                 const tipo = evento.tipo?.toLowerCase() || "default";
                 const estilo = estilosPorTipo[tipo] || estilosPorTipo["default"];
-                return (
-                  <div key={evento.id}>
-                    {nivelAcceso === "junta" && evento.mostrar === "junta" && (
-                      <div className="text-[0.65rem] font-bold text-red-500 uppercase mb-1">
-                        🔒 Vista: Junta
-                      </div>
-                    )}
-                    {nivelAcceso === "junta" && evento.mostrar === "socios" && (
-                      <div className="text-[0.65rem] font-bold text-yellow-600 uppercase mb-1">
-                        🔐 Vista: Socios
-                      </div>
-                    )}
-                    {nivelAcceso === "junta" && (!evento.mostrar || evento.mostrar === "general") && (
-                      <div className="text-[0.65rem] font-bold text-green-600 uppercase mb-1">
-                        🌐 Vista: Público
-                      </div>
-                    )}
-                    <Evento evento={evento} estilo={estilo} />
-                  </div>
-                );
+                return <Evento key={evento.id} evento={evento} estilo={estilo} />;
               })}
           </div>
         ))}

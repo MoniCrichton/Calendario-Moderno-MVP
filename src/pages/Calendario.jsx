@@ -16,6 +16,7 @@ import { db } from "../modules/shared/firebase";
 import Evento from "../components/Evento";
 import { useNavigate } from "react-router-dom";
 import leyendaRI from "../modules/shared/mesesRI";
+import VersionInfo from "../components/VersionInfo";
 import "../estilos/evento.css";
 
 export default function Calendario({ nivel = "publico" }) {
@@ -23,6 +24,7 @@ export default function Calendario({ nivel = "publico" }) {
   const [diasDelMes, setDiasDelMes] = useState([]);
   const [eventos, setEventos] = useState([]);
   const [estilosPorTipo, setEstilosPorTipo] = useState({});
+  const [actualizado, setActualizado] = useState(false);
   const navigate = useNavigate();
 
   const esCelular = window.innerWidth < 640;
@@ -111,6 +113,14 @@ export default function Calendario({ nivel = "publico" }) {
     }
   }, [currentDate]);
 
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        setActualizado(true);
+      });
+    }
+  }, []);
+
   const cambiarMes = (offset) => {
     setCurrentDate((prev) => addMonths(prev, offset));
   };
@@ -126,7 +136,6 @@ export default function Calendario({ nivel = "publico" }) {
 
   return (
     <div className="relative p-4">
-      {/* Flotantes: volver y mes actual */}
       {nivel === "junta" && (
         <button
           onClick={() => navigate("/admin")}
@@ -205,6 +214,29 @@ export default function Calendario({ nivel = "publico" }) {
           </div>
         ))}
       </div>
+
+      <VersionInfo nivel={nivel} />
+
+      {actualizado && (
+        <div style={{
+          position: 'fixed',
+          bottom: 60,
+          right: 10,
+          backgroundColor: '#0f4c81',
+          color: 'white',
+          padding: '6px 12px',
+          borderRadius: '8px',
+          fontSize: '0.75rem',
+          boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
+          zIndex: 1001,
+          cursor: 'pointer'
+        }}
+        onClick={() => window.location.reload()}
+        >
+          🔄 Nueva versión disponible<br />
+          Tocá para actualizar
+        </div>
+      )}
     </div>
   );
 }

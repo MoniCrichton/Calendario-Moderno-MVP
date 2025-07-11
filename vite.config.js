@@ -10,6 +10,46 @@ export default defineConfig(({ mode }) => {
   if (isJunta) entrada = 'src/main-junta.jsx';
   if (isTesoreria) entrada = 'src/main-tesoreria.jsx';
 
+  // Íconos según modo
+  const icons = isJunta
+    ? [
+        {
+          src: '/icons/icon-192-junta.png',
+          sizes: '192x192',
+          type: 'image/png',
+        },
+        {
+          src: '/icons/icon-512-junta.png',
+          sizes: '512x512',
+          type: 'image/png',
+        },
+      ]
+    : isTesoreria
+    ? [
+        {
+          src: '/icons/icon-192-tesoreria.png',
+          sizes: '192x192',
+          type: 'image/png',
+        },
+        {
+          src: '/icons/icon-512-tesoreria.png',
+          sizes: '512x512',
+          type: 'image/png',
+        },
+      ]
+    : [
+        {
+          src: '/icons/icon-192.png',
+          sizes: '192x192',
+          type: 'image/png',
+        },
+        {
+          src: '/icons/icon-512.png',
+          sizes: '512x512',
+          type: 'image/png',
+        },
+      ];
+
   const manifest = {
     name: isJunta
       ? 'Calendario Rotary Junta'
@@ -30,18 +70,7 @@ export default defineConfig(({ mode }) => {
     background_color: '#ffffff',
     theme_color: '#0f4c81',
     orientation: 'portrait',
-    icons: [
-      {
-        src: '/icons/icon-192.png',
-        sizes: '192x192',
-        type: 'image/png',
-      },
-      {
-        src: '/icons/icon-512.png',
-        sizes: '512x512',
-        type: 'image/png',
-      },
-    ],
+    icons,
   };
 
   return {

@@ -15,6 +15,7 @@ import { collection, getDocs, query, orderBy } from "firebase/firestore";
 import { db } from "../modules/shared/firebase";
 import Evento from "../components/Evento";
 import { useNavigate } from "react-router-dom";
+import leyendaRI from "@/modules/shared/mesesRI";
 import "../estilos/evento.css";
 
 export default function Calendario({ nivel = "publico" }) {
@@ -125,6 +126,7 @@ export default function Calendario({ nivel = "publico" }) {
 
   return (
     <div className="relative p-4">
+      {/* Flotantes: volver y mes actual */}
       {nivel === "junta" && (
         <button
           onClick={() => navigate("/admin")}
@@ -147,9 +149,14 @@ export default function Calendario({ nivel = "publico" }) {
         →
       </button>
 
-      <h2 className="text-2xl font-bold mb-4 text-center">
-        {format(currentDate, "MMMM yyyy", { locale: es })}
-      </h2>
+      <div className="sticky top-0 bg-white z-10 pb-2">
+        <h2 className="text-2xl font-bold mb-1 text-center">
+          {format(currentDate, "MMMM yyyy", { locale: es })}
+        </h2>
+        <div className="text-sm text-center italic text-gray-600">
+          {leyendaRI[currentDate.getMonth()] || ""}
+        </div>
+      </div>
 
       <div className={`grid gap-2 ${esCelular ? "grid-cols-2" : "grid-cols-7"}`}>
         {diasDelMes.map((dia, index) => (

@@ -1,27 +1,37 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
+import { db } from "../modules/shared/firebase";
 import {
   collection,
   addDoc,
   getDocs,
+  updateDoc,
   deleteDoc,
   doc,
-  updateDoc,
+  Timestamp,
   query,
   orderBy,
+  writeBatch
 } from "firebase/firestore";
-import { db } from "../modules/shared/firebase";
+import { useNavigate } from "react-router-dom";
 
 export default function PanelEventos() {
-  const [titulo, setTitulo] = useState("");
-  const [tipo, setTipo] = useState("");
-  const [detalles, setDetalles] = useState("");
-  const [fecha, setFecha] = useState("");
-  const [horaInicio, setHoraInicio] = useState("");
-  const [horaFin, setHoraFin] = useState("");
-  const [mostrar, setMostrar] = useState("general");
+  const [evento, setEvento] = useState({
+    id: null,
+    titulo: "",
+    tipo: "",
+    detalles: "",
+    fecha: "",
+    horaInicio: "",
+    horaFin: "",
+    mostrar: "general",
+  });
+
   const [eventos, setEventos] = useState([]);
-  const [tiposDisponibles, setTiposDisponibles] = useState([]);
-  const [editandoId, setEditandoId] = useState(null);
+  const [tiposEventos, setTiposEventos] = useState([]);
+  const [eventosFiltrados, setEventosFiltrados] = useState([]);
+  const [busqueda, setBusqueda] = useState("");
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     cargarEventos();
@@ -29,167 +39,229 @@ export default function PanelEventos() {
   }, []);
 
   const cargarEventos = async () => {
-    const q = query(collection(db, "eventos"), orderBy("fecha", "desc"));
+    const q = query(collection(db, "eventos"), orderBy("fecha", "asc"));
     const querySnapshot = await getDocs(q);
-    const lista = querySnapshot.docs.map((doc) => {
-      const data = doc.data();
-      let fechaObj;
-      if (data.fecha.toDate) {
-        fechaObj = data.fecha.toDate();
-      } else {
-        const [anio, mes, dia] = data.fecha.split("-").map(Number);
-        fechaObj = new Date(anio, mes - 1, dia);
-      }
-      return { id: doc.id, ...data, fechaObj };
+    const lista = [];
+    querySnapshot.forEach((docSnap) => {
+      const data = docSnap.data();
+      lista.push({
+        id: docSnap.id,
+        ...data,
+        fecha:
+          typeof data.fecha === "object" && data.fecha.toDate
+            ? data.fecha.toDate().toISOString().split("T")[0]
+            : data.fecha,
+      });
     });
     setEventos(lista);
+    setEventosFiltrados(lista);
   };
 
   const cargarTipos = async () => {
-    const response = await fetch("/data/event_type_styles.json");
-    const json = await response.json();
-    setTiposDisponibles(json);
+    try {
+      const response = await fetch("/data/event_type_styles.json");
+      const json = await response.json();
+      setTiposEventos(json);
+    } catch (error) {
+      console.error("Error cargando tipos de evento:", error);
+    }
+  };
+
+  const handleChange = (e) => {
+    setEvento({ ...evento, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!titulo || !tipo || !fecha) return;
-
-    const evento = {
-      titulo,
-      tipo,
-      detalles,
-      fecha,
-      horaInicio,
-      horaFin,
-      mostrar,
-      enviadoPor: "Moni",
-    };
-
-    if (editandoId) {
-      await updateDoc(doc(db, "eventos", editandoId), evento);
-    } else {
-      await addDoc(collection(db, "eventos"), evento);
+    try {
+      if (evento.id) {
+        const docRef = doc(db, "eventos", evento.id);
+        await updateDoc(docRef, evento);
+        alert("Evento modificado correctamente");
+      } else {
+        const eventoFinal = {
+          ...evento,
+          creadoEn: Timestamp.now(),
+        };
+        await addDoc(collection(db, "eventos"), eventoFinal);
+        alert("Evento agregado correctamente");
+      }
+      setEvento({
+        id: null,
+        titulo: "",
+        tipo: "",
+        detalles: "",
+        fecha: "",
+        horaInicio: "",
+        horaFin: "",
+        mostrar: "general",
+      });
+      cargarEventos();
+    } catch (error) {
+      alert("Error al guardar evento: " + error.message);
     }
-
-    setTitulo("");
-    setTipo("");
-    setDetalles("");
-    setFecha("");
-    setHoraInicio("");
-    setHoraFin("");
-    setMostrar("general");
-    setEditandoId(null);
-    cargarEventos();
-  };
-
-  const eliminarEvento = async (id) => {
-    await deleteDoc(doc(db, "eventos", id));
-    cargarEventos();
   };
 
   const editarEvento = (evento) => {
-    setTitulo(evento.titulo);
-    setTipo(evento.tipo);
-    setDetalles(evento.detalles || "");
-    setFecha(evento.fecha);
-    setHoraInicio(evento.horaInicio || "");
-    setHoraFin(evento.horaFin || "");
-    setMostrar(evento.mostrar || "general");
-    setEditandoId(evento.id);
+    setEvento(evento);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const corregirTipo = async (tipoIncorrecto, tipoCorrecto) => {
-    const eventosFiltrados = eventos.filter((e) => e.tipo === tipoIncorrecto);
-    for (const e of eventosFiltrados) {
-      await updateDoc(doc(db, "eventos", e.id), { tipo: tipoCorrecto });
+  const eliminarEvento = async (id) => {
+    if (confirm("¿Estás seguro de que querés eliminar este evento?")) {
+      await deleteDoc(doc(db, "eventos", id));
+      cargarEventos();
     }
+  };
+
+  const reemplazarTipo = async (tipoActual, tipoNuevo) => {
+    const confirmacion = confirm(
+      `¿Querés reemplazar todos los eventos del tipo "${tipoActual}" por "${tipoNuevo}"?`
+    );
+    if (!confirmacion) return;
+
+    const q = query(collection(db, "eventos"));
+    const querySnapshot = await getDocs(q);
+    const batch = writeBatch(db);
+
+    querySnapshot.forEach((docSnap) => {
+      const data = docSnap.data();
+      if (data.tipo === tipoActual) {
+        batch.update(doc(db, "eventos", docSnap.id), { tipo: tipoNuevo });
+      }
+    });
+
+    await batch.commit();
+    alert(`Se reemplazó "${tipoActual}" por "${tipoNuevo}" en todos los eventos.`);
     cargarEventos();
   };
 
-  const tiposUsados = Array.from(new Set(eventos.map((e) => e.tipo))).sort();
-  const tiposValidos = tiposDisponibles.map((t) => t.tipo);
-  const tiposErroneos = tiposUsados.filter((t) => !tiposValidos.includes(t));
+  const obtenerEmojiPorTipo = (tipo) => {
+    const encontrado = tiposEventos.find((t) => t.tipo === tipo);
+    return encontrado ? encontrado.emoji : "";
+  };
+
+  const tiposUsados = Array.from(
+    new Set(eventos.map((e) => e.tipo).filter((t) => t))
+  ).sort();
+
+  const filtrarEventos = ({ tipo, mostrar, sinTipo }) => {
+    let resultado = eventos;
+    if (tipo) resultado = resultado.filter((e) => e.tipo === tipo);
+    if (mostrar) resultado = resultado.filter((e) => e.mostrar === mostrar);
+    if (sinTipo) resultado = resultado.filter((e) => !e.tipo || e.tipo.trim() === "");
+    setEventosFiltrados(resultado);
+  };
+
+  const filtrarPorBusqueda = () => {
+    const texto = busqueda.toLowerCase();
+    const resultado = eventos.filter((e) => {
+      return (
+        e.titulo.toLowerCase().includes(texto) ||
+        (e.detalles && e.detalles.toLowerCase().includes(texto)) ||
+        (e.tipo && e.tipo.toLowerCase().includes(texto))
+      );
+    });
+    setEventosFiltrados(resultado);
+  };
 
   return (
-    <div className="p-4 max-w-xl mx-auto">
-      <h2 className="text-xl font-bold mb-4">Cargar o modificar evento</h2>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-2">
-        <input
-          placeholder="Título"
-          value={titulo}
-          onChange={(e) => setTitulo(e.target.value)}
-          className="border p-2 rounded"
-        />
-        <select
-          value={tipo}
-          onChange={(e) => setTipo(e.target.value)}
-          className="border p-2 rounded"
-        >
-          <option value="">Tipo de evento</option>
-          {tiposDisponibles.map((t) => (
-            <option key={t.tipo} value={t.tipo}>
-              {t.emoji} {t.tipo}
+    <div className="max-w-xl mx-auto p-4 pb-16 relative">
+      <h1 className="text-xl font-bold mb-4">
+        {evento.id ? "Editar Evento" : "Cargar Evento"}
+      </h1>
+
+      <form onSubmit={handleSubmit} className="grid gap-3">
+        <input type="text" name="titulo" placeholder="Título" value={evento.titulo} onChange={handleChange} className="border p-2 rounded" required />
+        <select name="tipo" value={evento.tipo} onChange={handleChange} className="border p-2 rounded">
+          <option value="">Seleccionar tipo</option>
+          {tiposEventos.map((tipo) => (
+            <option key={tipo.tipo} value={tipo.tipo}>
+              {tipo.emoji} {tipo.tipo}
             </option>
           ))}
         </select>
-        <input
-          type="date"
-          value={fecha}
-          onChange={(e) => setFecha(e.target.value)}
-          className="border p-2 rounded"
-        />
-        <input
-          placeholder="Detalles"
-          value={detalles}
-          onChange={(e) => setDetalles(e.target.value)}
-          className="border p-2 rounded"
-        />
-        <input
-          type="time"
-          value={horaInicio}
-          onChange={(e) => setHoraInicio(e.target.value)}
-          className="border p-2 rounded"
-        />
-        <input
-          type="time"
-          value={horaFin}
-          onChange={(e) => setHoraFin(e.target.value)}
-          className="border p-2 rounded"
-        />
-        <select
-          value={mostrar}
-          onChange={(e) => setMostrar(e.target.value)}
-          className="border p-2 rounded"
-        >
+        <input type="text" name="detalles" placeholder="Detalles" value={evento.detalles} onChange={handleChange} className="border p-2 rounded" />
+        <input type="date" name="fecha" value={evento.fecha} onChange={handleChange} className="border p-2 rounded" required />
+        <input type="time" name="horaInicio" value={evento.horaInicio} onChange={handleChange} className="border p-2 rounded" />
+        <input type="time" name="horaFin" value={evento.horaFin} onChange={handleChange} className="border p-2 rounded" />
+        <select name="mostrar" value={evento.mostrar} onChange={handleChange} className="border p-2 rounded">
           <option value="general">Público</option>
           <option value="socios">Socios</option>
           <option value="junta">Junta</option>
         </select>
-        <button className="bg-blue-600 text-white p-2 rounded">
-          {editandoId ? "Guardar cambios" : "Agregar evento"}
+        <button type="submit" className="bg-blue-600 text-white p-2 rounded">
+          {evento.id ? "Actualizar" : "Guardar"} evento
         </button>
       </form>
 
-      {tiposErroneos.length > 0 && (
-        <div className="mt-8">
-          <h3 className="font-bold mb-2">Tipos incorrectos detectados:</h3>
-          <div className="flex flex-wrap gap-2">
-            {tiposErroneos.map((tipo) => (
-              <button
-                key={tipo}
-                onClick={() => {
-                  const sugerencia = prompt(`¿Cómo debería llamarse "${tipo}"?`);
-                  if (sugerencia) corregirTipo(tipo, sugerencia);
-                }}
-                className="px-2 py-1 bg-red-200 rounded"
-              >
-                {tipo}
-              </button>
-            ))}
-          </div>
+      <h2 className="text-lg font-bold mt-6 mb-2">Filtros rápidos</h2>
+      <div className="mb-2 flex flex-wrap gap-2">
+        {tiposUsados.map((tipo) => (
+          <button key={tipo} onClick={() => filtrarEventos({ tipo })} className="bg-gray-100 px-3 py-1 rounded">
+            {obtenerEmojiPorTipo(tipo)} {tipo}
+          </button>
+        ))}
+        <button onClick={() => filtrarEventos({ sinTipo: true })} className="bg-yellow-100 px-3 py-1 rounded">
+          Sin tipo
+        </button>
+        <button onClick={() => setEventosFiltrados(eventos)} className="bg-gray-200 px-3 py-1 rounded">
+          Mostrar todos
+        </button>
+      </div>
+
+      <div className="mb-4">
+        <input
+          type="text"
+          placeholder="Buscar por título, tipo o detalles"
+          value={busqueda}
+          onChange={(e) => setBusqueda(e.target.value)}
+          className="border p-2 rounded w-full"
+        />
+        <button
+          onClick={filtrarPorBusqueda}
+          className="mt-2 w-full bg-blue-500 text-white py-1 rounded"
+        >
+          Buscar
+        </button>
+      </div>
+
+      {eventosFiltrados.length > 0 && (
+        <div className="mt-6 space-y-2">
+          {eventosFiltrados.map((e) => (
+            <div key={e.id} className="border p-2 rounded shadow-sm flex flex-col gap-1">
+              <div className="text-sm font-semibold">
+                {e.fecha} – {e.titulo}
+              </div>
+              <div className="text-xs text-gray-600">
+                {obtenerEmojiPorTipo(e.tipo)} {e.tipo} | {e.mostrar}
+              </div>
+              <div className="text-xs text-gray-500">{e.detalles}</div>
+              <div className="flex gap-2 mt-1">
+                <button
+                  onClick={() => editarEvento(e)}
+                  className="bg-yellow-400 px-2 py-1 rounded text-xs"
+                >
+                  Editar
+                </button>
+                <button
+                  onClick={() => eliminarEvento(e.id)}
+                  className="bg-red-500 px-2 py-1 rounded text-xs text-white"
+                >
+                  Eliminar
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       )}
+
+      <button
+        onClick={() => navigate("/")}
+        className="fixed bottom-4 left-4 bg-green-600 text-white px-4 py-2 rounded-full shadow-md hover:bg-green-700"
+      >
+        ← Volver
+      </button>
     </div>
   );
 }

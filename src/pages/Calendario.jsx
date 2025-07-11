@@ -15,7 +15,7 @@ import { collection, getDocs, query, orderBy } from "firebase/firestore";
 import { db } from "../modules/shared/firebase";
 import Evento from "../components/Evento";
 import { useNavigate } from "react-router-dom";
-import leyendaRI from "@/modules/shared/mesesRI";
+import leyendaRI from "../modules/shared/mesesRI";
 import "../estilos/evento.css";
 
 export default function Calendario({ nivel = "publico" }) {

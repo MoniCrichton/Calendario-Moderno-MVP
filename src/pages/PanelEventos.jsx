@@ -10,7 +10,6 @@ import {
   orderBy,
 } from "firebase/firestore";
 import { db } from "../modules/shared/firebase";
-import { format } from "date-fns";
 
 export default function PanelEventos() {
   const [titulo, setTitulo] = useState("");
@@ -113,9 +112,9 @@ export default function PanelEventos() {
   const tiposErroneos = tiposUsados.filter((t) => !tiposValidos.includes(t));
 
   return (
-    <div className="p-4 max-w-3xl mx-auto">
+    <div className="p-4 max-w-xl mx-auto">
       <h2 className="text-xl font-bold mb-4">Cargar o modificar evento</h2>
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-2">
         <input
           placeholder="Título"
           value={titulo}
@@ -167,7 +166,7 @@ export default function PanelEventos() {
           <option value="socios">Socios</option>
           <option value="junta">Junta</option>
         </select>
-        <button className="bg-blue-600 text-white p-2 rounded col-span-1 sm:col-span-2">
+        <button className="bg-blue-600 text-white p-2 rounded">
           {editandoId ? "Guardar cambios" : "Agregar evento"}
         </button>
       </form>

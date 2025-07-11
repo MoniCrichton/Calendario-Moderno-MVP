@@ -12,6 +12,7 @@ export default function App() {
         <Route path="/calendario" element={<Calendario nivel="publico" />} />
         <Route path="/calendario-socios" element={<Calendario nivel="socio" />} />
         <Route path="/calendario-junta" element={<Calendario nivel="junta" />} />
+        <Route path="/calendario-tesoreria" element={<Calendario nivel="tesoreria" />} />
         <Route path="/admin" element={<PanelEventos />} /> {/* ✅ Esta es la línea nueva */}
         <Route path="*" element={<NotFound />} />
       </Routes>

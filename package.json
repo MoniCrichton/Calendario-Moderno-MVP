@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "build:junta": "vite build --mode junta",
+    "build:tesoreria": "vite build --mode tesoreria",
     "build:socios": "vite build --mode socios"
   },
   "dependencies": {

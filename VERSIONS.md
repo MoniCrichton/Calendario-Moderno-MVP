@@ -1,5 +1,11 @@
 # Historial de versiones - Calendario Rotary BB Almafuerte
 
+## v5 - Calendario Tesorería
+- Se agregó versión exclusiva de calendario para tesorería (`/calendario-tesoreria`)
+- Se configuró como PWA independiente
+- Visibilidad `tesoreria` ahora es filtrable y respetada por nivel
+
+
 ## v4.0 (11 de julio 2025)
 - Primera versión PWA funcional (instalable en celular)
 - Ícono con logo oficial de Rotary

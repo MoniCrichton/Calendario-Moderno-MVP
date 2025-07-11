@@ -2,16 +2,15 @@
 
 ## v5 - Calendario Tesorería
 - Se agregó versión exclusiva de calendario para tesorería (`/calendario-tesoreria`)
-- Se configuró como PWA independiente
+- Se configuró como PWA independiente, con ícono personalizado JR
 - Visibilidad `tesoreria` ahora es filtrable y respetada por nivel
-
 
 ## v4.0 (11 de julio 2025)
 - Primera versión PWA funcional (instalable en celular)
 - Ícono con logo oficial de Rotary
 - Manifest.json con nombre y ruta separados por nivel
 - Soporte para instalación como app
-- Inicio en ruta `/calendario-junta`
+- Inicio en ruta `/calendario-junta` (y `/calendario-socios`)
 - Compatible con actualizaciones automáticas
 
 ## v3.0 (julio 2025)

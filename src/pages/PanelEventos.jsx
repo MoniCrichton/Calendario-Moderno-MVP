@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { db } from "../modules/shared/firebase";
 import {
@@ -24,6 +25,7 @@ export default function PanelEventos() {
     horaInicio: "",
     horaFin: "",
     mostrar: "general",
+    sinHora: false,
   });
 
   const [eventos, setEventos] = useState([]);
@@ -51,10 +53,12 @@ export default function PanelEventos() {
           typeof data.fecha === "object" && data.fecha.toDate
             ? data.fecha.toDate().toISOString().split("T")[0]
             : data.fecha,
+        sinHora: data.sinHora || false,
       });
     });
-    setEventos(lista);
-    setEventosFiltrados(lista);
+    const ordenada = lista.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+    setEventos(ordenada);
+    setEventosFiltrados(ordenada);
   };
 
   const cargarTipos = async () => {
@@ -68,24 +72,35 @@ export default function PanelEventos() {
   };
 
   const handleChange = (e) => {
-    setEvento({ ...evento, [e.target.name]: e.target.value });
+    const { name, value, type, checked } = e.target;
+    setEvento({
+      ...evento,
+      [name]: type === "checkbox" ? checked : value,
+    });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const eventoFinal = {
+        ...evento,
+        creadoEn: Timestamp.now(),
+      };
+
+      if (eventoFinal.sinHora) {
+        delete eventoFinal.horaInicio;
+        delete eventoFinal.horaFin;
+      }
+
       if (evento.id) {
         const docRef = doc(db, "eventos", evento.id);
-        await updateDoc(docRef, evento);
+        await updateDoc(docRef, eventoFinal);
         alert("Evento modificado correctamente");
       } else {
-        const eventoFinal = {
-          ...evento,
-          creadoEn: Timestamp.now(),
-        };
         await addDoc(collection(db, "eventos"), eventoFinal);
         alert("Evento agregado correctamente");
       }
+
       setEvento({
         id: null,
         titulo: "",
@@ -95,6 +110,7 @@ export default function PanelEventos() {
         horaInicio: "",
         horaFin: "",
         mostrar: "general",
+        sinHora: false,
       });
       cargarEventos();
     } catch (error) {
@@ -103,7 +119,7 @@ export default function PanelEventos() {
   };
 
   const editarEvento = (evento) => {
-    setEvento(evento);
+    setEvento({ ...evento, sinHora: evento.sinHora || false });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -150,7 +166,9 @@ export default function PanelEventos() {
     if (tipo) resultado = resultado.filter((e) => e.tipo === tipo);
     if (mostrar) resultado = resultado.filter((e) => e.mostrar === mostrar);
     if (sinTipo) resultado = resultado.filter((e) => !e.tipo || e.tipo.trim() === "");
-    setEventosFiltrados(resultado);
+    setEventosFiltrados(
+      [...resultado].sort((a, b) => new Date(a.fecha) - new Date(b.fecha))
+    );
   };
 
   const filtrarPorBusqueda = () => {
@@ -162,7 +180,9 @@ export default function PanelEventos() {
         (e.tipo && e.tipo.toLowerCase().includes(texto))
       );
     });
-    setEventosFiltrados(resultado);
+    setEventosFiltrados(
+      [...resultado].sort((a, b) => new Date(a.fecha) - new Date(b.fecha))
+    );
   };
 
   return (
@@ -183,8 +203,19 @@ export default function PanelEventos() {
         </select>
         <input type="text" name="detalles" placeholder="Detalles" value={evento.detalles} onChange={handleChange} className="border p-2 rounded" />
         <input type="date" name="fecha" value={evento.fecha} onChange={handleChange} className="border p-2 rounded" required />
-        <input type="time" name="horaInicio" value={evento.horaInicio} onChange={handleChange} className="border p-2 rounded" />
-        <input type="time" name="horaFin" value={evento.horaFin} onChange={handleChange} className="border p-2 rounded" />
+
+        <label className="flex items-center gap-2">
+          <input type="checkbox" name="sinHora" checked={evento.sinHora} onChange={handleChange} />
+          Evento sin hora
+        </label>
+
+        {!evento.sinHora && (
+          <>
+            <input type="time" name="horaInicio" value={evento.horaInicio} onChange={handleChange} className="border p-2 rounded" />
+            <input type="time" name="horaFin" value={evento.horaFin} onChange={handleChange} className="border p-2 rounded" />
+          </>
+        )}
+
         <select name="mostrar" value={evento.mostrar} onChange={handleChange} className="border p-2 rounded">
           <option value="general">Público</option>
           <option value="socios">Socios</option>
@@ -205,7 +236,7 @@ export default function PanelEventos() {
         <button onClick={() => filtrarEventos({ sinTipo: true })} className="bg-yellow-100 px-3 py-1 rounded">
           Sin tipo
         </button>
-        <button onClick={() => setEventosFiltrados(eventos)} className="bg-gray-200 px-3 py-1 rounded">
+        <button onClick={() => setEventosFiltrados([...eventos].sort((a, b) => new Date(a.fecha) - new Date(b.fecha)))} className="bg-gray-200 px-3 py-1 rounded">
           Mostrar todos
         </button>
       </div>
@@ -228,31 +259,38 @@ export default function PanelEventos() {
 
       {eventosFiltrados.length > 0 && (
         <div className="mt-6 space-y-2">
-          {eventosFiltrados.map((e) => (
-            <div key={e.id} className="border p-2 rounded shadow-sm flex flex-col gap-1">
-              <div className="text-sm font-semibold">
-                {e.fecha} – {e.titulo}
+          {[...eventosFiltrados]
+            .sort((a, b) => new Date(a.fecha) - new Date(b.fecha))
+            .map((e) => (
+              <div key={e.id} className="border p-2 rounded shadow-sm flex flex-col gap-1">
+                <div className="text-sm font-semibold">
+                  {e.fecha} – {e.titulo}
+                </div>
+                <div className="text-xs text-gray-600">
+                  {obtenerEmojiPorTipo(e.tipo)} {e.tipo} | {e.mostrar}
+                </div>
+                <div className="text-xs text-gray-500">{e.detalles}</div>
+                {!e.sinHora && (e.horaInicio || e.horaFin) && (
+                  <div className="text-xs text-gray-500">
+                    {e.horaInicio} {e.horaFin ? `– ${e.horaFin}` : ""}
+                  </div>
+                )}
+                <div className="flex gap-2 mt-1">
+                  <button
+                    onClick={() => editarEvento(e)}
+                    className="bg-yellow-400 px-2 py-1 rounded text-xs"
+                  >
+                    Editar
+                  </button>
+                  <button
+                    onClick={() => eliminarEvento(e.id)}
+                    className="bg-red-500 px-2 py-1 rounded text-xs text-white"
+                  >
+                    Eliminar
+                  </button>
+                </div>
               </div>
-              <div className="text-xs text-gray-600">
-                {obtenerEmojiPorTipo(e.tipo)} {e.tipo} | {e.mostrar}
-              </div>
-              <div className="text-xs text-gray-500">{e.detalles}</div>
-              <div className="flex gap-2 mt-1">
-                <button
-                  onClick={() => editarEvento(e)}
-                  className="bg-yellow-400 px-2 py-1 rounded text-xs"
-                >
-                  Editar
-                </button>
-                <button
-                  onClick={() => eliminarEvento(e.id)}
-                  className="bg-red-500 px-2 py-1 rounded text-xs text-white"
-                >
-                  Eliminar
-                </button>
-              </div>
-            </div>
-          ))}
+            ))}
         </div>
       )}
 

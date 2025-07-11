@@ -43,9 +43,9 @@ export default defineConfig({
   build: {
     rollupOptions: {
       input: {
-        'calendario-socios': 'src/main-socios.html',
-        'calendario-junta': 'src/main-junta.html',
-        'calendario-tesoreria': 'src/main-tesoreria.html',
+        'calendario-socios': 'public/main-socios.html',
+        'calendario-junta': 'public/main-junta.html',
+        'calendario-tesoreria': 'public/main-tesoreria.html',
       },
     },
   },

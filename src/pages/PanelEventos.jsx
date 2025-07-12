@@ -247,11 +247,12 @@ export default function PanelEventos() {
       )}
 
       <button
-        onClick={() => navigate("/")}
+        onClick={() => navigate("/calendario-junta")}
         className="fixed bottom-4 left-4 bg-green-600 text-white px-4 py-2 rounded-full shadow-md hover:bg-green-700"
       >
-        ← Volver
+        ← Volver a Cal-Junta
       </button>
+
     </div>
   );
 }

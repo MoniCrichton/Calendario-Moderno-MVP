@@ -3,6 +3,8 @@ import Home from "./pages/Home";
 import Calendario from "./pages/Calendario";
 import NotFound from "./pages/NotFound";
 import PanelEventos from "./pages/PanelEventos"; // ✅ Asegurate que la ruta coincida
+import PanelTesoreria from "./pages/PanelTesoreria";
+
 
 export default function App() {
   return (
@@ -14,6 +16,7 @@ export default function App() {
         <Route path="/calendario-junta" element={<Calendario nivel="junta" />} />
         <Route path="/calendario-tesoreria" element={<Calendario nivel="tesoreria" />} />
         <Route path="/admin" element={<PanelEventos />} /> {/* ✅ Esta es la línea nueva */}
+        <Route path="/panel-tesoreria" element={<PanelTesoreria />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>

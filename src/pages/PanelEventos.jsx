@@ -116,11 +116,17 @@ export default function PanelEventos() {
   };
 
   const eliminarEvento = async (id) => {
+    if (!id) {
+      alert("ID inválido para eliminar el evento.");
+      return;
+    }
+
     try {
-      if (confirm("¿Estás seguro de que querés eliminar este evento?")) {
-        await deleteDoc(doc(db, "eventos", id));
-        cargarEventos();
-      }
+      const confirmar = confirm("¿Estás seguro de que querés eliminar este evento?");
+      if (!confirmar) return;
+
+      await deleteDoc(doc(db, "eventos", id));
+      cargarEventos();
     } catch (error) {
       alert("No se pudo eliminar el evento: " + error.message);
     }

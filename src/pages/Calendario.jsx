@@ -27,7 +27,14 @@ export default function Calendario({ nivel = "publico" }) {
   const [actualizado, setActualizado] = useState(false);
   const navigate = useNavigate();
 
-  const esCelular = window.innerWidth < 640;
+  const [esCelular, setEsCelular] = useState(window.innerWidth < 640);
+  console.log("¿Es celular?", esCelular, "Ancho:", window.innerWidth);
+
+  useEffect(() => {
+    const actualizarTamaño = () => setEsCelular(window.innerWidth < 640);
+    window.addEventListener("resize", actualizarTamaño);
+    return () => window.removeEventListener("resize", actualizarTamaño);
+  }, []);
 
   useEffect(() => {
     async function fetchEventos() {

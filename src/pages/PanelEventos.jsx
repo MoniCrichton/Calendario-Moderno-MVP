@@ -24,26 +24,18 @@ export default function PanelEventos() {
     horaInicio: "",
     horaFin: "",
     mostrar: "general",
-    sinHora: false,
   });
 
   const [eventos, setEventos] = useState([]);
   const [tiposEventos, setTiposEventos] = useState([]);
   const [eventosFiltrados, setEventosFiltrados] = useState([]);
   const [busqueda, setBusqueda] = useState("");
-  const [actualizado, setActualizado] = useState(false);
 
   const navigate = useNavigate();
 
   useEffect(() => {
     cargarEventos();
     cargarTipos();
-
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        setActualizado(true);
-      });
-    }
   }, []);
 
   const cargarEventos = async () => {
@@ -59,12 +51,10 @@ export default function PanelEventos() {
           typeof data.fecha === "object" && data.fecha.toDate
             ? data.fecha.toDate().toISOString().split("T")[0]
             : data.fecha,
-        sinHora: data.sinHora || false,
       });
     });
-    const ordenada = lista.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
-    setEventos(ordenada);
-    setEventosFiltrados(ordenada);
+    setEventos(lista);
+    setEventosFiltrados(lista);
   };
 
   const cargarTipos = async () => {
@@ -78,35 +68,24 @@ export default function PanelEventos() {
   };
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setEvento({
-      ...evento,
-      [name]: type === "checkbox" ? checked : value,
-    });
+    setEvento({ ...evento, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const eventoFinal = {
-        ...evento,
-        creadoEn: Timestamp.now(),
-      };
-
-      if (eventoFinal.sinHora) {
-        delete eventoFinal.horaInicio;
-        delete eventoFinal.horaFin;
-      }
-
       if (evento.id) {
         const docRef = doc(db, "eventos", evento.id);
-        await updateDoc(docRef, eventoFinal);
+        await updateDoc(docRef, evento);
         alert("Evento modificado correctamente");
       } else {
+        const eventoFinal = {
+          ...evento,
+          creadoEn: Timestamp.now(),
+        };
         await addDoc(collection(db, "eventos"), eventoFinal);
         alert("Evento agregado correctamente");
       }
-
       setEvento({
         id: null,
         titulo: "",
@@ -116,7 +95,6 @@ export default function PanelEventos() {
         horaInicio: "",
         horaFin: "",
         mostrar: "general",
-        sinHora: false,
       });
       cargarEventos();
     } catch (error) {
@@ -125,7 +103,7 @@ export default function PanelEventos() {
   };
 
   const editarEvento = (evento) => {
-    setEvento({ ...evento, sinHora: evento.sinHora || false });
+    setEvento(evento);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -172,9 +150,7 @@ export default function PanelEventos() {
     if (tipo) resultado = resultado.filter((e) => e.tipo === tipo);
     if (mostrar) resultado = resultado.filter((e) => e.mostrar === mostrar);
     if (sinTipo) resultado = resultado.filter((e) => !e.tipo || e.tipo.trim() === "");
-    setEventosFiltrados(
-      [...resultado].sort((a, b) => new Date(a.fecha) - new Date(b.fecha))
-    );
+    setEventosFiltrados(resultado);
   };
 
   const filtrarPorBusqueda = () => {
@@ -186,39 +162,96 @@ export default function PanelEventos() {
         (e.tipo && e.tipo.toLowerCase().includes(texto))
       );
     });
-    setEventosFiltrados(
-      [...resultado].sort((a, b) => new Date(a.fecha) - new Date(b.fecha))
-    );
+    setEventosFiltrados(resultado);
   };
 
   return (
-    <div className="max-w-xl mx-auto p-4 pb-16 relative">
-      <h1 className="text-xl font-bold mb-4">
+    <div className="max-w-md mx-auto px-4 py-6 sm:px-6 lg:px-8">
+      <h1 className="text-2xl font-bold mb-6 text-center">
         {evento.id ? "Editar Evento" : "Cargar Evento"}
       </h1>
 
-      {/* ...formulario y filtros existentes... */}
+      <form onSubmit={handleSubmit} className="grid gap-4">
+        <input type="text" name="titulo" placeholder="Título" value={evento.titulo} onChange={handleChange} className="border p-3 rounded text-base" required />
+        <select name="tipo" value={evento.tipo} onChange={handleChange} className="border p-3 rounded text-base">
+          <option value="">Seleccionar tipo</option>
+          {tiposEventos.map((tipo) => (
+            <option key={tipo.tipo} value={tipo.tipo}>
+              {tipo.emoji} {tipo.tipo}
+            </option>
+          ))}
+        </select>
+        <input type="text" name="detalles" placeholder="Detalles" value={evento.detalles} onChange={handleChange} className="border p-3 rounded text-base" />
+        <input type="date" name="fecha" value={evento.fecha} onChange={handleChange} className="border p-3 rounded text-base" required />
+        <input type="time" name="horaInicio" value={evento.horaInicio} onChange={handleChange} className="border p-3 rounded text-base" />
+        <input type="time" name="horaFin" value={evento.horaFin} onChange={handleChange} className="border p-3 rounded text-base" />
+        <select name="mostrar" value={evento.mostrar} onChange={handleChange} className="border p-3 rounded text-base">
+          <option value="general">Público</option>
+          <option value="socios">Socios</option>
+          <option value="junta">Junta</option>
+        </select>
+        <button type="submit" className="bg-blue-600 text-white py-2 px-4 rounded text-lg">
+          {evento.id ? "Actualizar" : "Guardar"} evento
+        </button>
+      </form>
 
-      {actualizado && (
-        <div style={{
-          position: 'fixed',
-          bottom: 60,
-          right: 10,
-          backgroundColor: '#0f4c81',
-          color: 'white',
-          padding: '6px 12px',
-          borderRadius: '8px',
-          fontSize: '0.75rem',
-          boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
-          zIndex: 1001,
-          cursor: 'pointer'
-        }}
-        onClick={() => window.location.reload()}
+      <h2 className="text-lg font-bold mt-8 mb-4 text-center">Filtros rápidos</h2>
+      <div className="flex flex-wrap gap-2 justify-center">
+        {tiposUsados.map((tipo) => (
+          <button key={tipo} onClick={() => filtrarEventos({ tipo })} className="bg-gray-200 px-3 py-1 rounded text-sm">
+            {obtenerEmojiPorTipo(tipo)} {tipo}
+          </button>
+        ))}
+        <button onClick={() => filtrarEventos({ sinTipo: true })} className="bg-yellow-100 px-3 py-1 rounded text-sm">
+          Sin tipo
+        </button>
+        <button onClick={() => setEventosFiltrados(eventos)} className="bg-gray-300 px-3 py-1 rounded text-sm">
+          Mostrar todos
+        </button>
+      </div>
+
+      <div className="mt-4">
+        <input
+          type="text"
+          placeholder="Buscar por título, tipo o detalles"
+          value={busqueda}
+          onChange={(e) => setBusqueda(e.target.value)}
+          className="border p-3 rounded w-full text-base"
+        />
+        <button
+          onClick={filtrarPorBusqueda}
+          className="mt-2 w-full bg-blue-500 text-white py-2 rounded text-base"
         >
-          🔄 Nueva versión disponible<br />
-          Tocá para actualizar
+          Buscar
+        </button>
+      </div>
+
+      {eventosFiltrados.length > 0 && (
+        <div className="mt-6 space-y-3">
+          {eventosFiltrados.map((e) => (
+            <div key={e.id} className="border p-3 rounded shadow-sm">
+              <div className="font-semibold text-base">
+                {e.fecha} – {e.titulo}
+              </div>
+              <div className="text-sm text-gray-600">
+                {obtenerEmojiPorTipo(e.tipo)} {e.tipo} | {e.mostrar}
+              </div>
+              <div className="text-sm text-gray-500">{e.detalles}</div>
+              <div className="flex gap-2 mt-2">
+                <button onClick={() => editarEvento(e)} className="bg-yellow-400 px-3 py-1 rounded text-sm">Editar</button>
+                <button onClick={() => eliminarEvento(e.id)} className="bg-red-500 px-3 py-1 rounded text-sm text-white">Eliminar</button>
+              </div>
+            </div>
+          ))}
         </div>
       )}
+
+      <button
+        onClick={() => navigate("/")}
+        className="fixed bottom-4 left-4 bg-green-600 text-white px-4 py-2 rounded-full shadow-md hover:bg-green-700"
+      >
+        ← Volver
+      </button>
     </div>
   );
 }

@@ -39,7 +39,7 @@ export default function PanelEventos() {
   }, []);
 
   const cargarEventos = async () => {
-    const q = query(collection(db, "eventos"), orderBy("fecha", "asc"));
+    const q = query(collection(db, "eventos"));
     const querySnapshot = await getDocs(q);
     const lista = [];
     querySnapshot.forEach((docSnap) => {
@@ -53,6 +53,14 @@ export default function PanelEventos() {
             : data.fecha,
       });
     });
+
+    // Ordenar por fecha y horaInicio (si existe)
+    lista.sort((a, b) => {
+      const fechaA = new Date(`${a.fecha}T${a.horaInicio || "00:00"}`);
+      const fechaB = new Date(`${b.fecha}T${b.horaInicio || "00:00"}`);
+      return fechaA - fechaB;
+    });
+
     setEventos(lista);
     setEventosFiltrados(lista);
   };
@@ -108,9 +116,13 @@ export default function PanelEventos() {
   };
 
   const eliminarEvento = async (id) => {
-    if (confirm("¿Estás seguro de que querés eliminar este evento?")) {
-      await deleteDoc(doc(db, "eventos", id));
-      cargarEventos();
+    try {
+      if (confirm("¿Estás seguro de que querés eliminar este evento?")) {
+        await deleteDoc(doc(db, "eventos", id));
+        cargarEventos();
+      }
+    } catch (error) {
+      alert("No se pudo eliminar el evento: " + error.message);
     }
   };
 
@@ -252,7 +264,6 @@ export default function PanelEventos() {
       >
         ← Volver a Cal-Junta
       </button>
-
     </div>
   );
 }

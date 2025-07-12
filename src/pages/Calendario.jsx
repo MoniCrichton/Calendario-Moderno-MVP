@@ -174,7 +174,7 @@ export default function Calendario({ nivel = "publico" }) {
         </div>
       </div>
 
-      <div className="grid gap-2 grid-cols-2 sm:grid-cols-7">
+      <div className="grid gap-2 grid-cols-2 md:grid-cols-7">
         {diasDelMes.map((dia, index) => (
           <div
             key={index}

@@ -17,7 +17,7 @@ import Evento from "../components/Evento";
 import { useNavigate } from "react-router-dom";
 import leyendaRI from "../modules/shared/mesesRI";
 import VersionInfo from "../components/VersionInfo";
-import "../estilos/evento.css";
+/*import "../estilos/evento.css";*/
 
 export default function Calendario({ nivel = "publico" }) {
   const [currentDate, setCurrentDate] = useState(new Date());

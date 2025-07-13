@@ -211,7 +211,36 @@ export default function PanelEventos() {
 
       <form onSubmit={handleSubmit} className="grid gap-3 mb-6">
         <input type="text" name="titulo" placeholder="Título" value={evento.titulo} onChange={handleChange} className="border p-2 rounded" required />
-        <input type="text" name="tipo" placeholder="Tipo" value={evento.tipo} onChange={handleChange} className="border p-2 rounded" />
+        <select
+          name="tipo"
+          value={evento.tipo}
+          onChange={handleChange}
+          className="border p-2 rounded"
+        >
+          <option value="">Seleccionar tipo...</option>
+          {tiposEventos.map((t) => (
+            <option key={t.tipo} value={t.tipo}>
+              {t.emoji} {t.tipo}
+            </option>
+          ))}
+        </select><select
+          name="tipo"
+          value={evento.tipo}
+          onChange={handleChange}
+          className="border p-2 rounded"
+        >
+          <option value="">Seleccionar tipo...</option>
+          {tiposEventos
+            .slice()
+            .sort((a, b) => a.tipo.localeCompare(b.tipo))
+            .map((t) => (
+              <option key={t.tipo} value={t.tipo}>
+                {t.emoji} {t.tipo}
+              </option>
+            ))}
+        </select>
+
+
         <input type="text" name="detalles" placeholder="Detalles" value={evento.detalles} onChange={handleChange} className="border p-2 rounded" />
         <input type="date" name="fecha" value={evento.fecha} onChange={handleChange} className="border p-2 rounded" required />
 

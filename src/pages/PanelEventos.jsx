@@ -13,7 +13,6 @@ import {
   writeBatch
 } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
-const [sinHora, setSinHora] = useState(false);
 
 export default function PanelEventos() {
   const [evento, setEvento] = useState({
@@ -27,6 +26,7 @@ export default function PanelEventos() {
     mostrar: "publico",
   });
 
+  const [sinHora, setSinHora] = useState(false);
   const [eventos, setEventos] = useState([]);
   const [tiposEventos, setTiposEventos] = useState([]);
   const [eventosFiltrados, setEventosFiltrados] = useState([]);
@@ -88,28 +88,25 @@ export default function PanelEventos() {
     setEvento({ ...evento, [e.target.name]: e.target.value });
   };
 
-  const limpiarHoras = (e) => {
-    const checked = e.target.checked;
-    if (checked) {
-      setEvento({ ...evento, horaInicio: "", horaFin: "" });
-    }
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const eventoFinal = {
+        ...evento,
+        horaInicio: sinHora ? "" : evento.horaInicio,
+        horaFin: sinHora ? "" : evento.horaFin,
+        creadoEn: Timestamp.now(),
+      };
+
       if (evento.id) {
         const docRef = doc(db, "eventos", evento.id);
-        await updateDoc(docRef, evento);
+        await updateDoc(docRef, eventoFinal);
         alert("Evento modificado correctamente");
       } else {
-        const eventoFinal = {
-          ...evento,
-          creadoEn: Timestamp.now(),
-        };
         await addDoc(collection(db, "eventos"), eventoFinal);
         alert("Evento agregado correctamente");
       }
+
       setEvento({
         id: null,
         titulo: "",
@@ -120,6 +117,7 @@ export default function PanelEventos() {
         horaFin: "",
         mostrar: "publico",
       });
+      setSinHora(false);
       cargarEventos();
     } catch (error) {
       alert("Error al guardar evento: " + error.message);
@@ -128,6 +126,7 @@ export default function PanelEventos() {
 
   const editarEvento = (evento) => {
     setEvento(evento);
+    setSinHora(!evento.horaInicio && !evento.horaFin);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -233,7 +232,6 @@ export default function PanelEventos() {
             />
             Sin hora
           </label>
-
         </div>
 
         <select name="mostrar" value={evento.mostrar} onChange={handleChange} className="border p-2 rounded">
@@ -288,11 +286,9 @@ export default function PanelEventos() {
       <button
         onClick={() => navigate("/calendario-junta")}
         className="fixed bottom-4 left-4 bg-green-600 text-white px-4 py-2 rounded-full shadow-md hover:bg-green-700"
-
->
+      >
         ← Volver a Junta
       </button>
-
     </div>
   );
 }

@@ -211,11 +211,13 @@ export default function PanelEventos() {
 
       <form onSubmit={handleSubmit} className="grid gap-3 mb-6">
         <input type="text" name="titulo" placeholder="Título" value={evento.titulo} onChange={handleChange} className="border p-2 rounded" required />
+        
         <select
           name="tipo"
           value={evento.tipo}
           onChange={handleChange}
           className="border p-2 rounded"
+          required
         >
           <option value="">Seleccionar tipo...</option>
           {tiposEventos
@@ -227,7 +229,6 @@ export default function PanelEventos() {
               </option>
             ))}
         </select>
-
 
         <input type="text" name="detalles" placeholder="Detalles" value={evento.detalles} onChange={handleChange} className="border p-2 rounded" />
         <input type="date" name="fecha" value={evento.fecha} onChange={handleChange} className="border p-2 rounded" required />

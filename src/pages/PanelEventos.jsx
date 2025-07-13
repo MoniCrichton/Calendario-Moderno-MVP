@@ -227,7 +227,7 @@ export default function PanelEventos() {
         </div>
 
         <select name="mostrar" value={evento.mostrar} onChange={handleChange} className="border p-2 rounded">
-          <option value="general">General</option>
+          <option value="general">Público</option>
           <option value="socios">Socios</option>
           <option value="junta">Junta</option>
         </select>
@@ -237,7 +237,6 @@ export default function PanelEventos() {
         </button>
       </form>
 
-      {/* Filtros rápidos */}
       <div className="flex flex-wrap gap-2 justify-center mb-4">
         {tiposUsados.map((tipo) => (
           <button key={tipo} onClick={() => filtrarEventos({ tipo })} className="bg-gray-200 px-3 py-1 rounded text-sm">
@@ -245,18 +244,16 @@ export default function PanelEventos() {
           </button>
         ))}
         <button onClick={() => filtrarEventos({ sinTipo: true })} className="bg-gray-200 px-3 py-1 rounded text-sm">Sin tipo</button>
-        <button onClick={() => filtrarEventos({ mostrar: "general" })} className="bg-blue-200 px-3 py-1 rounded text-sm">General</button>
+        <button onClick={() => filtrarEventos({ mostrar: "general" })} className="bg-blue-200 px-3 py-1 rounded text-sm">Público</button>
         <button onClick={() => filtrarEventos({ mostrar: "socios" })} className="bg-blue-200 px-3 py-1 rounded text-sm">Socios</button>
         <button onClick={() => filtrarEventos({ mostrar: "junta" })} className="bg-blue-200 px-3 py-1 rounded text-sm">Junta</button>
         <button onClick={cargarEventos} className="bg-green-300 px-3 py-1 rounded text-sm">Mostrar todos</button>
       </div>
 
-      {/* Buscador */}
       <div className="mb-4 text-center">
         <input type="text" placeholder="Buscar evento..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} className="border p-2 rounded w-full max-w-md" />
       </div>
 
-      {/* Resultados */}
       <div ref={resultadosRef} />
       {mostrarResultados && (
         <div className="mt-6 space-y-3">
@@ -266,7 +263,7 @@ export default function PanelEventos() {
                 {e.fecha} – {e.titulo}
               </div>
               <div className="text-sm text-gray-600">
-                {obtenerEmojiPorTipo(e.tipo)} {e.tipo} | {e.mostrar}
+                {obtenerEmojiPorTipo(e.tipo)} {e.tipo} | {e.mostrar === "general" ? "público" : e.mostrar}
               </div>
               <div className="text-sm text-gray-500">{e.detalles}</div>
               <div className="flex gap-2 mt-2">

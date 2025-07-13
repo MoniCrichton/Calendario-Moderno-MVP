@@ -23,7 +23,7 @@ export default function PanelEventos() {
     fecha: "",
     horaInicio: "",
     horaFin: "",
-    mostrar: "general",
+    mostrar: "publico",
   });
 
   const [eventos, setEventos] = useState([]);
@@ -117,7 +117,7 @@ export default function PanelEventos() {
         fecha: "",
         horaInicio: "",
         horaFin: "",
-        mostrar: "general",
+        mostrar: "publico",
       });
       cargarEventos();
     } catch (error) {
@@ -216,18 +216,16 @@ export default function PanelEventos() {
         <input type="date" name="fecha" value={evento.fecha} onChange={handleChange} className="border p-2 rounded" required />
 
         <div className="grid grid-cols-1 gap-2">
-          <div className="flex items-center gap-2">
-            <input type="time" name="horaInicio" value={evento.horaInicio} onChange={handleChange} className="border p-2 rounded w-full" />
-            <label className="flex items-center gap-1">
-              <input type="checkbox" checked={!evento.horaInicio && !evento.horaFin} onChange={limpiarHoras} />
-              Sin hora
-            </label>
-          </div>
+          <input type="time" name="horaInicio" value={evento.horaInicio} onChange={handleChange} className="border p-2 rounded w-full" />
           <input type="time" name="horaFin" value={evento.horaFin} onChange={handleChange} className="border p-2 rounded w-full" />
+          <label className="flex items-center gap-1">
+            <input type="checkbox" checked={!evento.horaInicio && !evento.horaFin} onChange={limpiarHoras} />
+            Sin hora
+          </label>
         </div>
 
         <select name="mostrar" value={evento.mostrar} onChange={handleChange} className="border p-2 rounded">
-          <option value="general">Público</option>
+          <option value="publico">Público</option>
           <option value="socios">Socios</option>
           <option value="junta">Junta</option>
         </select>
@@ -244,7 +242,7 @@ export default function PanelEventos() {
           </button>
         ))}
         <button onClick={() => filtrarEventos({ sinTipo: true })} className="bg-gray-200 px-3 py-1 rounded text-sm">Sin tipo</button>
-        <button onClick={() => filtrarEventos({ mostrar: "general" })} className="bg-blue-200 px-3 py-1 rounded text-sm">Público</button>
+        <button onClick={() => filtrarEventos({ mostrar: "publico" })} className="bg-blue-200 px-3 py-1 rounded text-sm">Público</button>
         <button onClick={() => filtrarEventos({ mostrar: "socios" })} className="bg-blue-200 px-3 py-1 rounded text-sm">Socios</button>
         <button onClick={() => filtrarEventos({ mostrar: "junta" })} className="bg-blue-200 px-3 py-1 rounded text-sm">Junta</button>
         <button onClick={cargarEventos} className="bg-green-300 px-3 py-1 rounded text-sm">Mostrar todos</button>
@@ -263,7 +261,7 @@ export default function PanelEventos() {
                 {e.fecha} – {e.titulo}
               </div>
               <div className="text-sm text-gray-600">
-                {obtenerEmojiPorTipo(e.tipo)} {e.tipo} | {e.mostrar === "general" ? "público" : e.mostrar}
+                {obtenerEmojiPorTipo(e.tipo)} {e.tipo} | {e.mostrar === "publico" ? "público" : e.mostrar}
               </div>
               <div className="text-sm text-gray-500">{e.detalles}</div>
               <div className="flex gap-2 mt-2">

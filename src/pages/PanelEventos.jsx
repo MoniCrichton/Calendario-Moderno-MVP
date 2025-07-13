@@ -201,31 +201,59 @@ export default function PanelEventos() {
   };
 
   return (
-    <div className="max-w-md mx-auto px-4 py-6 sm:px-6 lg:px-8">
+    <div className="max-w-3xl mx-auto px-4 py-6">
       <h1 className="text-2xl font-bold mb-6 text-center">
         {evento.id ? "Editar Evento" : "Cargar Evento"}
       </h1>
 
-      <form onSubmit={handleSubmit} className="grid gap-3">
+      <form onSubmit={handleSubmit} className="grid gap-3 mb-6">
         <input type="text" name="titulo" placeholder="Título" value={evento.titulo} onChange={handleChange} className="border p-2 rounded" required />
         <input type="text" name="tipo" placeholder="Tipo" value={evento.tipo} onChange={handleChange} className="border p-2 rounded" />
         <input type="text" name="detalles" placeholder="Detalles" value={evento.detalles} onChange={handleChange} className="border p-2 rounded" />
         <input type="date" name="fecha" value={evento.fecha} onChange={handleChange} className="border p-2 rounded" required />
-        <input type="time" name="horaInicio" value={evento.horaInicio} onChange={handleChange} className="border p-2 rounded" />
-        <input type="time" name="horaFin" value={evento.horaFin} onChange={handleChange} className="border p-2 rounded" />
+
+        <div className="flex items-center gap-2">
+          <input type="time" name="horaInicio" value={evento.horaInicio} onChange={handleChange} className="border p-2 rounded w-full" />
+          <input type="time" name="horaFin" value={evento.horaFin} onChange={handleChange} className="border p-2 rounded w-full" />
+          <label className="flex items-center gap-1">
+            <input type="checkbox" checked={!evento.horaInicio && !evento.horaFin} onChange={limpiarHoras} />
+            Sin hora
+          </label>
+        </div>
+
         <select name="mostrar" value={evento.mostrar} onChange={handleChange} className="border p-2 rounded">
           <option value="general">General</option>
           <option value="socios">Socios</option>
           <option value="junta">Junta</option>
           <option value="tesoreria">Tesorería</option>
         </select>
-        <button type="button" onClick={limpiarHoras} className="bg-gray-300 text-sm py-1 px-3 rounded">Evento sin hora</button>
+
         <button type="submit" className="bg-blue-600 text-white py-2 rounded">
           {evento.id ? "Actualizar" : "Guardar"}
         </button>
       </form>
 
-      {/* Mostrar eventos */}
+      {/* Filtros rápidos */}
+      <div className="flex flex-wrap gap-2 justify-center mb-4">
+        {tiposUsados.map((tipo) => (
+          <button key={tipo} onClick={() => filtrarEventos({ tipo })} className="bg-gray-200 px-3 py-1 rounded text-sm">
+            {obtenerEmojiPorTipo(tipo)} {tipo}
+          </button>
+        ))}
+        <button onClick={() => filtrarEventos({ sinTipo: true })} className="bg-gray-200 px-3 py-1 rounded text-sm">Sin tipo</button>
+        <button onClick={() => filtrarEventos({ mostrar: "general" })} className="bg-blue-200 px-3 py-1 rounded text-sm">General</button>
+        <button onClick={() => filtrarEventos({ mostrar: "socios" })} className="bg-blue-200 px-3 py-1 rounded text-sm">Socios</button>
+        <button onClick={() => filtrarEventos({ mostrar: "junta" })} className="bg-blue-200 px-3 py-1 rounded text-sm">Junta</button>
+        <button onClick={() => filtrarEventos({ mostrar: "tesoreria" })} className="bg-blue-200 px-3 py-1 rounded text-sm">Tesorería</button>
+        <button onClick={cargarEventos} className="bg-green-300 px-3 py-1 rounded text-sm">Mostrar todos</button>
+      </div>
+
+      {/* Buscador */}
+      <div className="mb-4 text-center">
+        <input type="text" placeholder="Buscar evento..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} className="border p-2 rounded w-full max-w-md" />
+      </div>
+
+      {/* Resultados */}
       <div ref={resultadosRef} />
       {mostrarResultados && (
         <div className="mt-6 space-y-3">

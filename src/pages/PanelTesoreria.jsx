@@ -8,11 +8,9 @@ import {
   deleteDoc,
   doc,
   query,
-  Timestamp
+  Timestamp,
 } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
-
-
 
 export default function PanelTesoreria() {
   const [registro, setRegistro] = useState({
@@ -29,10 +27,12 @@ export default function PanelTesoreria() {
   });
 
   const [registros, setRegistros] = useState([]);
+  const [tipos, setTipos] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
     cargarRegistros();
+    cargarTipos();
   }, []);
 
   const cargarRegistros = async () => {
@@ -49,6 +49,21 @@ export default function PanelTesoreria() {
     setRegistros(lista);
   };
 
+  const cargarTipos = async () => {
+    try {
+      const res = await fetch("/data/event_type_styles.json");
+      const json = await res.json();
+      setTipos(json);
+    } catch (err) {
+      console.error("Error cargando tipos:", err);
+    }
+  };
+
+  const obtenerEmoji = (tipo) => {
+    const encontrado = tipos.find((t) => t.tipo === tipo);
+    return encontrado ? encontrado.emoji : "💼";
+  };
+
   const handleChange = (e) => {
     setRegistro({ ...registro, [e.target.name]: e.target.value });
   };
@@ -56,7 +71,6 @@ export default function PanelTesoreria() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validaciones
     if (registro.importePresupuestado && isNaN(registro.importePresupuestado)) {
       alert("El importe presupuestado debe ser un número válido.");
       return;
@@ -65,7 +79,11 @@ export default function PanelTesoreria() {
       alert("El importe real debe ser un número válido.");
       return;
     }
-    if (registro.fechaPago && registro.fechaVencimiento && new Date(registro.fechaPago) < new Date(registro.fechaVencimiento)) {
+    if (
+      registro.fechaPago &&
+      registro.fechaVencimiento &&
+      new Date(registro.fechaPago) < new Date(registro.fechaVencimiento)
+    ) {
       const confirmar = confirm("La fecha de pago es anterior al vencimiento. ¿Continuar?");
       if (!confirmar) return;
     }
@@ -80,6 +98,7 @@ export default function PanelTesoreria() {
         await addDoc(collection(db, "eventos"), nuevo);
         alert("Registro agregado correctamente");
       }
+
       setRegistro({
         id: null,
         concepto: "",
@@ -111,6 +130,14 @@ export default function PanelTesoreria() {
     cargarRegistros();
   };
 
+  const calcularEstado = (r) => {
+    const hoy = new Date();
+    const venc = new Date(r.fechaVencimiento);
+    if (r.fechaPago) return "bg-green-100"; // pagado
+    if (hoy <= venc) return "bg-yellow-100"; // no pagado pero aún no vencido
+    return "bg-red-100"; // vencido y no pagado
+  };
+
   return (
     <div className="max-w-2xl mx-auto px-4 py-6">
       <h1 className="text-2xl font-bold mb-6 text-center">
@@ -119,13 +146,13 @@ export default function PanelTesoreria() {
 
       <form onSubmit={handleSubmit} className="grid gap-3">
         <input type="text" name="concepto" placeholder="Concepto (ej: Luz)" value={registro.concepto} onChange={handleChange} className="border p-2 rounded" required />
-        <input type="text" name="tipo" placeholder="Categoría (servicio, cuota, etc)" value={registro.tipo} onChange={handleChange} className="border p-2 rounded" />
+        <input type="text" name="tipo" placeholder="Categoría" value={registro.tipo} onChange={handleChange} className="border p-2 rounded" required />
         <input type="date" name="fechaVencimiento" value={registro.fechaVencimiento} onChange={handleChange} className="border p-2 rounded" required />
         <input type="number" name="importePresupuestado" placeholder="Importe presupuestado" value={registro.importePresupuestado} onChange={handleChange} className="border p-2 rounded" />
-        <input type="number" name="importeReal" placeholder="Importe real (opcional)" value={registro.importeReal} onChange={handleChange} className="border p-2 rounded" />
+        <input type="number" name="importeReal" placeholder="Importe real (si se pagó)" value={registro.importeReal} onChange={handleChange} className="border p-2 rounded" />
         <input type="date" name="fechaPago" value={registro.fechaPago} onChange={handleChange} className="border p-2 rounded" />
         <input type="text" name="referencia" placeholder="Nº comprobante / referencia" value={registro.referencia} onChange={handleChange} className="border p-2 rounded" />
-        <input type="text" name="formaPago" placeholder="Forma de pago (efectivo, transferencia...)" value={registro.formaPago} onChange={handleChange} className="border p-2 rounded" />
+        <input type="text" name="formaPago" placeholder="Forma de pago" value={registro.formaPago} onChange={handleChange} className="border p-2 rounded" />
         <button type="submit" className="bg-blue-600 text-white py-2 rounded">
           {registro.id ? "Actualizar" : "Guardar"}
         </button>
@@ -133,10 +160,23 @@ export default function PanelTesoreria() {
 
       <h2 className="text-xl font-semibold mt-8 mb-4">Registros</h2>
       {registros.map((r) => (
-        <div key={r.id} className="border p-3 rounded mb-3">
-          <div className="font-medium">{r.fechaVencimiento} - {r.concepto}</div>
-          <div className="text-sm text-gray-700">{r.tipo} | {r.formaPago} | {r.importeReal || r.importePresupuestado}</div>
-          <div className="text-xs text-gray-500">Pago: {r.fechaPago} | Ref: {r.referencia}</div>
+        <div key={r.id} className={`border p-3 rounded mb-3 shadow-sm ${calcularEstado(r)}`}>
+          <div className="text-lg font-semibold">
+            {obtenerEmoji(r.tipo)} {r.concepto}
+          </div>
+          <div className="text-sm text-gray-700">Vencimiento: {r.fechaVencimiento}</div>
+          {r.importePresupuestado && (
+            <div className="text-sm text-gray-700">Importe presupuestado: ${parseFloat(r.importePresupuestado).toLocaleString()}</div>
+          )}
+          {r.fechaPago && (
+            <div className="text-sm text-gray-700">Pago: {r.fechaPago}</div>
+          )}
+          {r.importeReal && (
+            <div className="text-sm text-gray-700">Importe real: ${parseFloat(r.importeReal).toLocaleString()}</div>
+          )}
+          {r.formaPago && (
+            <div className="text-sm text-gray-700">Forma de pago: {r.formaPago}</div>
+          )}
           <div className="mt-2 flex gap-2">
             <button onClick={() => editarRegistro(r)} className="text-sm text-yellow-600">Editar</button>
             <button onClick={() => eliminarRegistro(r.id)} className="text-sm text-red-600">Eliminar</button>

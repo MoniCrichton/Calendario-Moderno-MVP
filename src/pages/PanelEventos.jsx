@@ -168,12 +168,12 @@ export default function PanelEventos() {
   };
 
   const tiposUsados = Array.from(
-    new Set(eventos.map((e) => e.tipo).filter((t) => t))
+    new Set(eventos.map((e) => (e.tipo || "").toLowerCase().trim()).filter((t) => t))
   ).sort();
 
   const filtrarEventos = ({ tipo, mostrar, sinTipo }) => {
     let resultado = eventos;
-    if (tipo) resultado = resultado.filter((e) => e.tipo === tipo);
+    if (tipo) resultado = resultado.filter((e) => (e.tipo || "").toLowerCase().trim() === tipo.toLowerCase().trim());
     if (mostrar) resultado = resultado.filter((e) => e.mostrar === mostrar);
     if (sinTipo) resultado = resultado.filter((e) => !e.tipo || e.tipo.trim() === "");
     setEventosFiltrados(resultado);

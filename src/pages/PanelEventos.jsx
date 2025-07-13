@@ -13,6 +13,7 @@ import {
   writeBatch
 } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
+const [sinHora, setSinHora] = useState(false);
 
 export default function PanelEventos() {
   const [evento, setEvento] = useState({
@@ -219,9 +220,20 @@ export default function PanelEventos() {
           <input type="time" name="horaInicio" value={evento.horaInicio} onChange={handleChange} className="border p-2 rounded w-full" />
           <input type="time" name="horaFin" value={evento.horaFin} onChange={handleChange} className="border p-2 rounded w-full" />
           <label className="flex items-center gap-1">
-            <input type="checkbox" checked={!evento.horaInicio && !evento.horaFin} onChange={limpiarHoras} />
+            <input
+              type="checkbox"
+              checked={sinHora}
+              onChange={(e) => {
+                const checked = e.target.checked;
+                setSinHora(checked);
+                if (checked) {
+                  setEvento({ ...evento, horaInicio: "", horaFin: "" });
+                }
+              }}
+            />
             Sin hora
           </label>
+
         </div>
 
         <select name="mostrar" value={evento.mostrar} onChange={handleChange} className="border p-2 rounded">
@@ -272,6 +284,15 @@ export default function PanelEventos() {
           ))}
         </div>
       )}
+
+      <button
+        onClick={() => navigate("/calendario-junta")}
+        className="fixed bottom-4 left-4 bg-green-600 text-white px-4 py-2 rounded-full shadow-md hover:bg-green-700"
+
+>
+        ← Volver a Junta
+      </button>
+
     </div>
   );
 }

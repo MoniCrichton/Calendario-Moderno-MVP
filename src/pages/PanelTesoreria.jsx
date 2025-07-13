@@ -12,6 +12,8 @@ import {
 } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 
+
+
 export default function PanelTesoreria() {
   const [registro, setRegistro] = useState({
     id: null,

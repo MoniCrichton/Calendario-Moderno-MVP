@@ -218,18 +218,6 @@ export default function PanelEventos() {
           className="border p-2 rounded"
         >
           <option value="">Seleccionar tipo...</option>
-          {tiposEventos.map((t) => (
-            <option key={t.tipo} value={t.tipo}>
-              {t.emoji} {t.tipo}
-            </option>
-          ))}
-        </select><select
-          name="tipo"
-          value={evento.tipo}
-          onChange={handleChange}
-          className="border p-2 rounded"
-        >
-          <option value="">Seleccionar tipo...</option>
           {tiposEventos
             .slice()
             .sort((a, b) => a.tipo.localeCompare(b.tipo))

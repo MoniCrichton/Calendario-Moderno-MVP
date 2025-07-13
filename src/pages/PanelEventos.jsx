@@ -30,6 +30,7 @@ export default function PanelEventos() {
   const [tiposEventos, setTiposEventos] = useState([]);
   const [eventosFiltrados, setEventosFiltrados] = useState([]);
   const [busqueda, setBusqueda] = useState("");
+  const [mostrarResultados, setMostrarResultados] = useState(false);
   const resultadosRef = useRef(null);
 
   const navigate = useNavigate();
@@ -69,6 +70,7 @@ export default function PanelEventos() {
 
     setEventos(lista);
     setEventosFiltrados([]);
+    setMostrarResultados(false);
   };
 
   const cargarTipos = async () => {
@@ -179,6 +181,7 @@ export default function PanelEventos() {
     if (mostrar) resultado = resultado.filter((e) => e.mostrar === mostrar);
     if (sinTipo) resultado = resultado.filter((e) => !e.tipo || e.tipo.trim() === "");
     setEventosFiltrados(resultado);
+    setMostrarResultados(true);
     setBusqueda("");
     setTimeout(() => resultadosRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
   };
@@ -193,6 +196,7 @@ export default function PanelEventos() {
       );
     });
     setEventosFiltrados(resultado);
+    setMostrarResultados(true);
     setTimeout(() => resultadosRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
   };
 
@@ -223,7 +227,7 @@ export default function PanelEventos() {
 
       {/* Mostrar eventos */}
       <div ref={resultadosRef} />
-      {eventosFiltrados.length > 0 && (
+      {mostrarResultados && (
         <div className="mt-6 space-y-3">
           {eventosFiltrados.map((e) => (
             <div key={e.id} className="border p-3 rounded shadow-sm">

@@ -68,7 +68,7 @@ export default function PanelEventos() {
     });
 
     setEventos(lista);
-    setEventosFiltrados([]); // No mostrar nada al inicio
+    setEventosFiltrados([]);
   };
 
   const cargarTipos = async () => {
@@ -202,7 +202,24 @@ export default function PanelEventos() {
         {evento.id ? "Editar Evento" : "Cargar Evento"}
       </h1>
 
-      {/* ... el resto del componente sigue igual ... */}
+      <form onSubmit={handleSubmit} className="grid gap-3">
+        <input type="text" name="titulo" placeholder="Título" value={evento.titulo} onChange={handleChange} className="border p-2 rounded" required />
+        <input type="text" name="tipo" placeholder="Tipo" value={evento.tipo} onChange={handleChange} className="border p-2 rounded" />
+        <input type="text" name="detalles" placeholder="Detalles" value={evento.detalles} onChange={handleChange} className="border p-2 rounded" />
+        <input type="date" name="fecha" value={evento.fecha} onChange={handleChange} className="border p-2 rounded" required />
+        <input type="time" name="horaInicio" value={evento.horaInicio} onChange={handleChange} className="border p-2 rounded" />
+        <input type="time" name="horaFin" value={evento.horaFin} onChange={handleChange} className="border p-2 rounded" />
+        <select name="mostrar" value={evento.mostrar} onChange={handleChange} className="border p-2 rounded">
+          <option value="general">General</option>
+          <option value="socios">Socios</option>
+          <option value="junta">Junta</option>
+          <option value="tesoreria">Tesorería</option>
+        </select>
+        <button type="button" onClick={limpiarHoras} className="bg-gray-300 text-sm py-1 px-3 rounded">Evento sin hora</button>
+        <button type="submit" className="bg-blue-600 text-white py-2 rounded">
+          {evento.id ? "Actualizar" : "Guardar"}
+        </button>
+      </form>
 
       {/* Mostrar eventos */}
       <div ref={resultadosRef} />

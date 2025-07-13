@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { db } from "../modules/shared/firebase";
 import {
   collection,
@@ -30,6 +30,7 @@ export default function PanelEventos() {
   const [tiposEventos, setTiposEventos] = useState([]);
   const [eventosFiltrados, setEventosFiltrados] = useState([]);
   const [busqueda, setBusqueda] = useState("");
+  const resultadosRef = useRef(null);
 
   const navigate = useNavigate();
 
@@ -37,6 +38,10 @@ export default function PanelEventos() {
     cargarEventos();
     cargarTipos();
   }, []);
+
+  useEffect(() => {
+    filtrarPorBusqueda();
+  }, [busqueda]);
 
   const cargarEventos = async () => {
     const q = query(collection(db, "eventos"));
@@ -54,7 +59,6 @@ export default function PanelEventos() {
       });
     });
 
-    // Ordenar por fecha y horaInicio (si existe)
     lista.sort((a, b) => {
       const fechaA = new Date(`${a.fecha}T${a.horaInicio || "00:00"}`);
       const fechaB = new Date(`${b.fecha}T${b.horaInicio || "00:00"}`);
@@ -77,6 +81,10 @@ export default function PanelEventos() {
 
   const handleChange = (e) => {
     setEvento({ ...evento, [e.target.name]: e.target.value });
+  };
+
+  const limpiarHoras = () => {
+    setEvento({ ...evento, horaInicio: "", horaFin: "" });
   };
 
   const handleSubmit = async (e) => {
@@ -169,6 +177,8 @@ export default function PanelEventos() {
     if (mostrar) resultado = resultado.filter((e) => e.mostrar === mostrar);
     if (sinTipo) resultado = resultado.filter((e) => !e.tipo || e.tipo.trim() === "");
     setEventosFiltrados(resultado);
+    setBusqueda("");
+    setTimeout(() => resultadosRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
   };
 
   const filtrarPorBusqueda = () => {
@@ -181,6 +191,7 @@ export default function PanelEventos() {
       );
     });
     setEventosFiltrados(resultado);
+    setTimeout(() => resultadosRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
   };
 
   return (
@@ -203,10 +214,14 @@ export default function PanelEventos() {
         <input type="date" name="fecha" value={evento.fecha} onChange={handleChange} className="border p-3 rounded text-base" required />
         <input type="time" name="horaInicio" value={evento.horaInicio} onChange={handleChange} className="border p-3 rounded text-base" />
         <input type="time" name="horaFin" value={evento.horaFin} onChange={handleChange} className="border p-3 rounded text-base" />
+        <button type="button" onClick={limpiarHoras} className="bg-gray-200 text-sm py-1 px-2 rounded">
+          Sin hora 🕑
+        </button>
         <select name="mostrar" value={evento.mostrar} onChange={handleChange} className="border p-3 rounded text-base">
           <option value="general">Público</option>
           <option value="socios">Socios</option>
           <option value="junta">Junta</option>
+          <option value="tesoreria">Tesorería</option>
         </select>
         <button type="submit" className="bg-blue-600 text-white py-2 px-4 rounded text-lg">
           {evento.id ? "Actualizar" : "Guardar"} evento
@@ -236,13 +251,9 @@ export default function PanelEventos() {
           onChange={(e) => setBusqueda(e.target.value)}
           className="border p-3 rounded w-full text-base"
         />
-        <button
-          onClick={filtrarPorBusqueda}
-          className="mt-2 w-full bg-blue-500 text-white py-2 rounded text-base"
-        >
-          Buscar
-        </button>
       </div>
+
+      <div ref={resultadosRef} />
 
       {eventosFiltrados.length > 0 && (
         <div className="mt-6 space-y-3">

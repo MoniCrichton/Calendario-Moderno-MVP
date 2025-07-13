@@ -87,8 +87,11 @@ export default function PanelEventos() {
     setEvento({ ...evento, [e.target.name]: e.target.value });
   };
 
-  const limpiarHoras = () => {
-    setEvento({ ...evento, horaInicio: "", horaFin: "" });
+  const limpiarHoras = (e) => {
+    const checked = e.target.checked;
+    if (checked) {
+      setEvento({ ...evento, horaInicio: "", horaFin: "" });
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -212,20 +215,21 @@ export default function PanelEventos() {
         <input type="text" name="detalles" placeholder="Detalles" value={evento.detalles} onChange={handleChange} className="border p-2 rounded" />
         <input type="date" name="fecha" value={evento.fecha} onChange={handleChange} className="border p-2 rounded" required />
 
-        <div className="flex items-center gap-2">
-          <input type="time" name="horaInicio" value={evento.horaInicio} onChange={handleChange} className="border p-2 rounded w-full" />
+        <div className="grid grid-cols-1 gap-2">
+          <div className="flex items-center gap-2">
+            <input type="time" name="horaInicio" value={evento.horaInicio} onChange={handleChange} className="border p-2 rounded w-full" />
+            <label className="flex items-center gap-1">
+              <input type="checkbox" checked={!evento.horaInicio && !evento.horaFin} onChange={limpiarHoras} />
+              Sin hora
+            </label>
+          </div>
           <input type="time" name="horaFin" value={evento.horaFin} onChange={handleChange} className="border p-2 rounded w-full" />
-          <label className="flex items-center gap-1">
-            <input type="checkbox" checked={!evento.horaInicio && !evento.horaFin} onChange={limpiarHoras} />
-            Sin hora
-          </label>
         </div>
 
         <select name="mostrar" value={evento.mostrar} onChange={handleChange} className="border p-2 rounded">
           <option value="general">General</option>
           <option value="socios">Socios</option>
           <option value="junta">Junta</option>
-          <option value="tesoreria">Tesorería</option>
         </select>
 
         <button type="submit" className="bg-blue-600 text-white py-2 rounded">
@@ -244,7 +248,6 @@ export default function PanelEventos() {
         <button onClick={() => filtrarEventos({ mostrar: "general" })} className="bg-blue-200 px-3 py-1 rounded text-sm">General</button>
         <button onClick={() => filtrarEventos({ mostrar: "socios" })} className="bg-blue-200 px-3 py-1 rounded text-sm">Socios</button>
         <button onClick={() => filtrarEventos({ mostrar: "junta" })} className="bg-blue-200 px-3 py-1 rounded text-sm">Junta</button>
-        <button onClick={() => filtrarEventos({ mostrar: "tesoreria" })} className="bg-blue-200 px-3 py-1 rounded text-sm">Tesorería</button>
         <button onClick={cargarEventos} className="bg-green-300 px-3 py-1 rounded text-sm">Mostrar todos</button>
       </div>
 

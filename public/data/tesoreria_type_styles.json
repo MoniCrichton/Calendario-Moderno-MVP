@@ -1,0 +1,16 @@
+[
+  { "tipo": "luz", "emoji": "💡", "color": "#FFD700" },
+  { "tipo": "agua", "emoji": "🚿", "color": "#00BFFF" },
+  { "tipo": "gas", "emoji": "🔥", "color": "#FF8C00" },
+  { "tipo": "internet", "emoji": "🌐", "color": "#6495ED" },
+  { "tipo": "hosting", "emoji": "🖥️", "color": "#4B0082" },
+  { "tipo": "impresiones", "emoji": "🖨️", "color": "#808080" },
+  { "tipo": "alquiler", "emoji": "🏠", "color": "#8B4513" },
+  { "tipo": "banco", "emoji": "🏦", "color": "#006400" },
+  { "tipo": "impuestos", "emoji": "📄", "color": "#A52A2A" },
+  { "tipo": "comunicación", "emoji": "📞", "color": "#4682B4" },
+  { "tipo": "eventos", "emoji": "🎉", "color": "#FF69B4" },
+  { "tipo": "donaciones", "emoji": "🎁", "color": "#9ACD32" },
+  { "tipo": "tecnología", "emoji": "💻", "color": "#708090" },
+  { "tipo": "otros", "emoji": "📌", "color": "#999999" }
+]

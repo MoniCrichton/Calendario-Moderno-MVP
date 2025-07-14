@@ -117,7 +117,7 @@ export default function PanelTesoreria() {
       }
 
       setRegistro({
-        id: null,
+        ...prev,
         concepto: "",
         tipo: "",
         fechaVencimiento: "",
@@ -134,6 +134,9 @@ export default function PanelTesoreria() {
       alert("Error: " + error.message);
     }
   };
+
+  console.log("Evento creado con ID:", docRef.id);
+  console.log("Evento actualizado con ID:", registro.id);
 
   const editarRegistro = (registro) => {
     setRegistro(registro);

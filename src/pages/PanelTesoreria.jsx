@@ -137,11 +137,22 @@ export default function PanelTesoreria() {
   };
 
   const eliminarRegistro = async (id) => {
-    if (!id) return;
+    if (!id) {
+      alert("ID inválido");
+      return;
+    }
+
     const confirmar = confirm("¿Eliminar este registro?");
     if (!confirmar) return;
-    await deleteDoc(doc(db, "eventos", id));
-    cargarRegistros();
+
+    try {
+      await deleteDoc(doc(db, "eventos", id));
+      alert("Registro eliminado correctamente.");
+      cargarRegistros();
+    } catch (error) {
+      console.error("Error al eliminar:", error);
+      alert("No se pudo eliminar el registro: " + error.message);
+    }
   };
 
   const obtenerEmoji = (tipo) => {

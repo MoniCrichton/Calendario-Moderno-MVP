@@ -10,6 +10,7 @@ import {
   query,
   Timestamp
 } from "firebase/firestore";
+import { Timestamp } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 
 export default function PanelTesoreria() {
@@ -82,7 +83,23 @@ export default function PanelTesoreria() {
         await updateDoc(docRef, registro);
         alert("Registro actualizado correctamente");
       } else {
-        const nuevo = { ...registro, creadoEn: Timestamp.now() };
+        const { id, ...resto } = registro;
+
+        const nuevo = {
+          ...resto,
+          creadoEn: Timestamp.now(),
+          fechaVencimiento: Timestamp.fromDate(new Date(registro.fechaVencimiento)),
+          fechaPago: registro.fechaPago
+            ? Timestamp.fromDate(new Date(registro.fechaPago))
+            : null,
+          importePresupuestado: registro.importePresupuestado
+            ? Number(parseFloat(registro.importePresupuestado).toFixed(2))
+            : 0,
+          importeReal: registro.importeReal
+            ? Number(parseFloat(registro.importeReal).toFixed(2))
+            : null,
+          };
+
         await addDoc(collection(db, "eventos"), nuevo);
         alert("Registro agregado correctamente");
       }

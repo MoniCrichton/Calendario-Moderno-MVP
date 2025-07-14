@@ -92,12 +92,15 @@ export default function PanelEventos() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const fecha = new Date(evento.fecha);
+      fecha.setHours(12, 0, 0, 0); // Forzar al mediodía
+
       const eventoFinal = {
         ...evento,
         horaInicio: sinHora ? "" : evento.horaInicio,
         horaFin: sinHora ? "" : evento.horaFin,
         creadoEn: Timestamp.now(),
-        fecha: Timestamp.fromDate(new Date(evento.fecha)),
+        fecha: Timestamp.fromDate(fecha),
       };
 
       if (evento.id) {

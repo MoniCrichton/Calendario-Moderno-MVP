@@ -93,13 +93,17 @@ export default function PanelTesoreria() {
       } else {
         const { id, ...resto } = registro;
 
+        const fechaVenc = new Date(registro.fechaVencimiento);
+        fechaVenc.setHours(12, 0, 0, 0);
+
+        const fechaPag = registro.fechaPago ? new Date(registro.fechaPago) : null;
+        if (fechaPag) fechaPag.setHours(12, 0, 0, 0);
+
         const nuevo = {
           ...resto,
           creadoEn: Timestamp.now(),
-          fechaVencimiento: Timestamp.fromDate(new Date(registro.fechaVencimiento)),
-          fechaPago: registro.fechaPago
-            ? Timestamp.fromDate(new Date(registro.fechaPago))
-            : null,
+          fechaVencimiento: Timestamp.fromDate(fechaVenc),
+          fechaPago: fechaPag ? Timestamp.fromDate(fechaPag) : null,
           importePresupuestado: registro.importePresupuestado
             ? Number(parseFloat(registro.importePresupuestado).toFixed(2))
             : 0,

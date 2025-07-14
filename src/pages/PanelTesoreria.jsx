@@ -54,17 +54,23 @@ export default function PanelTesoreria() {
       }
     });
     lista.forEach((r) => {
-      if (r.fechaVencimiento?.toDate) {
-        const fecha = r.fechaVencimiento.toDate();
-        fecha.setDate(fecha.getDate() + 1); // 👈 Corrección por zona horaria
-        r.fechaVencimiento = fecha;
-      }
-      if (r.fechaPago?.toDate) {
-        const fecha = r.fechaPago.toDate();
-        fecha.setDate(fecha.getDate() + 1); // 👈 También corregimos fecha de pago
-        r.fechaPago = fecha;
-      }
-    });
+    if (r.fechaVencimiento?.toDate) {
+      const fecha = r.fechaVencimiento.toDate();
+      fecha.setDate(fecha.getDate() + 1);
+      r.fechaVencimiento = fecha;
+    }
+    if (r.fechaPago?.toDate) {
+      const fecha = r.fechaPago.toDate();
+      fecha.setDate(fecha.getDate() + 1);
+      r.fechaPago = fecha;
+    }
+  });
+
+  lista.sort((a, b) => {
+    const fechaA = a.fechaVencimiento ?? new Date(a.fechaVencimiento);
+    const fechaB = b.fechaVencimiento ?? new Date(b.fechaVencimiento);
+    return fechaA - fechaB;
+  });
 
     setRegistros(lista);
   };

@@ -11,6 +11,7 @@ import {
   Timestamp
 } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
+import { format } from "date-fns";
 
 export default function PanelTesoreria() {
   const [registro, setRegistro] = useState({
@@ -52,7 +53,11 @@ export default function PanelTesoreria() {
         lista.push({ id: docSnap.id, ...data });
       }
     });
-    lista.sort((a, b) => new Date(a.fechaVencimiento) - new Date(b.fechaVencimiento));
+    lista.sort((a, b) => {
+      const fechaA = a.fechaVencimiento?.toDate?.() ?? new Date(a.fechaVencimiento);
+      const fechaB = b.fechaVencimiento?.toDate?.() ?? new Date(b.fechaVencimiento);
+      return fechaA - fechaB;
+    });
     setRegistros(lista);
   };
 
@@ -71,7 +76,11 @@ export default function PanelTesoreria() {
       alert("El importe real debe ser un número válido.");
       return;
     }
-    if (registro.fechaPago && registro.fechaVencimiento && new Date(registro.fechaPago) < new Date(registro.fechaVencimiento)) {
+    if (
+      registro.fechaPago &&
+      registro.fechaVencimiento &&
+      new Date(registro.fechaPago) < new Date(registro.fechaVencimiento)
+    ) {
       const confirmar = confirm("La fecha de pago es anterior al vencimiento. ¿Continuar?");
       if (!confirmar) return;
     }
@@ -97,11 +106,12 @@ export default function PanelTesoreria() {
           importeReal: registro.importeReal
             ? Number(parseFloat(registro.importeReal).toFixed(2))
             : null,
-          };
+        };
 
         await addDoc(collection(db, "eventos"), nuevo);
         alert("Registro agregado correctamente");
       }
+
       setRegistro({
         id: null,
         concepto: "",
@@ -114,6 +124,7 @@ export default function PanelTesoreria() {
         formaPago: "",
         mostrar: "tesoreria",
       });
+
       cargarRegistros();
     } catch (error) {
       alert("Error: " + error.message);
@@ -140,10 +151,12 @@ export default function PanelTesoreria() {
 
   const calcularEstado = (r) => {
     const hoy = new Date();
-    const venc = new Date(r.fechaVencimiento);
-    if (r.fechaPago) return "bg-green-100"; // pagado
-    if (hoy <= venc) return "bg-yellow-100"; // no pagado pero aún no vencido
-    return "bg-red-100"; // vencido y no pagado
+    const venc = r.fechaVencimiento?.toDate
+      ? r.fechaVencimiento.toDate()
+      : new Date(r.fechaVencimiento);
+    if (r.fechaPago?.toDate) return "bg-green-100";
+    if (hoy <= venc) return "bg-yellow-100";
+    return "bg-red-100";
   };
 
   return (
@@ -154,21 +167,12 @@ export default function PanelTesoreria() {
 
       <form onSubmit={handleSubmit} className="grid gap-3">
         <input type="text" name="concepto" placeholder="Concepto (ej: Luz)" value={registro.concepto} onChange={handleChange} className="border p-2 rounded" required />
-
-        <input
-          list="tipos-tesoreria"
-          name="tipo"
-          placeholder="Categoría"
-          value={registro.tipo}
-          onChange={handleChange}
-          className="border p-2 rounded"
-        />
+        <input list="tipos-tesoreria" name="tipo" placeholder="Categoría" value={registro.tipo} onChange={handleChange} className="border p-2 rounded" />
         <datalist id="tipos-tesoreria">
           {listaTipos.map((t, i) => (
             <option key={i} value={t} />
           ))}
         </datalist>
-
         <input type="date" name="fechaVencimiento" value={registro.fechaVencimiento} onChange={handleChange} className="border p-2 rounded" required />
         <input type="number" name="importePresupuestado" placeholder="Importe presupuestado" value={registro.importePresupuestado} onChange={handleChange} className="border p-2 rounded" />
         <input type="number" name="importeReal" placeholder="Importe real (si se pagó)" value={registro.importeReal} onChange={handleChange} className="border p-2 rounded" />
@@ -186,20 +190,34 @@ export default function PanelTesoreria() {
           <div className="text-lg font-semibold">
             {obtenerEmoji(r.tipo)} {r.concepto}
           </div>
-          <div className="text-sm text-gray-700">Vencimiento: {r.fechaVencimiento}</div>
+          <div className="text-sm text-gray-700">
+            Vencimiento: {r.fechaVencimiento?.toDate
+              ? format(r.fechaVencimiento.toDate(), "dd/MM/yyyy")
+              : r.fechaVencimiento}
+          </div>
           {r.importePresupuestado && (
-            <div className="text-sm text-gray-700">Importe presupuestado: ${parseFloat(r.importePresupuestado).toLocaleString()}</div>
+            <div className="text-sm text-gray-700">
+              Importe presupuestado: ${parseFloat(r.importePresupuestado).toLocaleString()}
+            </div>
           )}
           {r.fechaPago && (
-            <div className="text-sm text-gray-700">Pago: {r.fechaPago}</div>
+            <div className="text-sm text-gray-700">
+              Pago: {r.fechaPago?.toDate
+                ? format(r.fechaPago.toDate(), "dd/MM/yyyy")
+                : r.fechaPago}
+            </div>
           )}
           {r.importeReal && (
-            <div className="text-sm text-gray-700">Importe real: ${parseFloat(r.importeReal).toLocaleString()}</div>
+            <div className="text-sm text-gray-700">
+              Importe real: ${parseFloat(r.importeReal).toLocaleString()}
+            </div>
           )}
           {r.formaPago && (
             <div className="text-sm text-gray-700">Forma de pago: {r.formaPago}</div>
           )}
-          <div className="text-xs text-gray-500">{r.referencia && `Ref: ${r.referencia}`}</div>
+          {r.referencia && (
+            <div className="text-xs text-gray-500">Ref: {r.referencia}</div>
+          )}
           <div className="mt-2 flex gap-2">
             <button onClick={() => editarRegistro(r)} className="text-sm text-yellow-600">Editar</button>
             <button onClick={() => eliminarRegistro(r.id)} className="text-sm text-red-600">Eliminar</button>

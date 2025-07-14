@@ -17,7 +17,7 @@ import { format } from "date-fns";
 
 export default function PanelEventos() {
   const [evento, setEvento] = useState({
-    ...prev,
+    id: null,
     titulo: "",
     tipo: "",
     detalles: "",
@@ -26,10 +26,6 @@ export default function PanelEventos() {
     horaFin: "",
     mostrar: "publico",
   });
-
-  console.log("Evento creado con ID:", docRef.id);
-  console.log("Evento actualizado con ID:", registro.id);
-
 
   const [sinHora, setSinHora] = useState(false);
   const [eventos, setEventos] = useState([]);
@@ -97,7 +93,7 @@ export default function PanelEventos() {
     e.preventDefault();
     try {
       const fecha = new Date(evento.fecha);
-      fecha.setHours(12, 0, 0, 0); // Forzar al mediodía
+      fecha.setHours(12, 0, 0, 0);
 
       const eventoFinal = {
         ...evento,

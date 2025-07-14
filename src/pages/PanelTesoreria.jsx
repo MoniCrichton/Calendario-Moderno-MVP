@@ -53,11 +53,19 @@ export default function PanelTesoreria() {
         lista.push({ id: docSnap.id, ...data });
       }
     });
-    lista.sort((a, b) => {
-      const fechaA = a.fechaVencimiento?.toDate?.() ?? new Date(a.fechaVencimiento);
-      const fechaB = b.fechaVencimiento?.toDate?.() ?? new Date(b.fechaVencimiento);
-      return fechaA - fechaB;
+    lista.forEach((r) => {
+      if (r.fechaVencimiento?.toDate) {
+        const fecha = r.fechaVencimiento.toDate();
+        fecha.setDate(fecha.getDate() + 1); // 👈 Corrección por zona horaria
+        r.fechaVencimiento = fecha;
+      }
+      if (r.fechaPago?.toDate) {
+        const fecha = r.fechaPago.toDate();
+        fecha.setDate(fecha.getDate() + 1); // 👈 También corregimos fecha de pago
+        r.fechaPago = fecha;
+      }
     });
+
     setRegistros(lista);
   };
 

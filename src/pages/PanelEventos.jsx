@@ -54,14 +54,18 @@ export default function PanelEventos() {
     const lista = [];
     querySnapshot.forEach((docSnap) => {
       const data = docSnap.data();
+      const fecha =
+        typeof data.fecha === "object" && data.fecha.toDate
+          ? data.fecha.toDate()
+          : new Date(data.fecha);
+      fecha.setDate(fecha.getDate() + 1); // 👈 Ajuste para compensar zona horaria
+
       lista.push({
         id: docSnap.id,
         ...data,
-        fecha:
-          typeof data.fecha === "object" && data.fecha.toDate
-            ? data.fecha.toDate().toISOString().split("T")[0]
-            : data.fecha,
-      });
+        fecha: fecha.toISOString().split("T")[0],
+      }); 
+
     });
 
     lista.sort((a, b) => {

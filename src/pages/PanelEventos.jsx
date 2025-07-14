@@ -17,7 +17,7 @@ import { format } from "date-fns";
 
 export default function PanelEventos() {
   const [evento, setEvento] = useState({
-    id: null,
+    ...prev,
     titulo: "",
     tipo: "",
     detalles: "",
@@ -26,6 +26,10 @@ export default function PanelEventos() {
     horaFin: "",
     mostrar: "publico",
   });
+
+  console.log("Evento creado con ID:", docRef.id);
+  console.log("Evento actualizado con ID:", registro.id);
+
 
   const [sinHora, setSinHora] = useState(false);
   const [eventos, setEventos] = useState([]);

@@ -10,7 +10,6 @@ import {
   query,
   Timestamp
 } from "firebase/firestore";
-import { Timestamp } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 
 export default function PanelTesoreria() {

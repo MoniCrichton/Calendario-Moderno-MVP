@@ -136,6 +136,8 @@ export default function Calendario({ nivel = "publico" }) {
     const nivelNormalizado = nivel?.toLowerCase()?.trim();
     const mostrar = mostrarRaw?.toLowerCase()?.trim();
 
+    console.log(`🕵️ Verificando visibilidad - Nivel: ${nivelNormalizado} | Mostrar: ${mostrar}`)
+    
     if (nivelNormalizado === "junta") {
       return mostrar === "junta" || mostrar === "socios" || mostrar === "publico";
     }

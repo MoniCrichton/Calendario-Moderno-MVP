@@ -21,6 +21,9 @@ export default function Calendario({ nivel = "publico" }) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [diasDelMes, setDiasDelMes] = useState([]);
   const [eventos, setEventos] = useState([]);
+  useEffect(() => {
+    window.eventos = eventos;
+  }, [eventos]);
   const [estilosPorTipo, setEstilosPorTipo] = useState({});
   const [actualizado, setActualizado] = useState(false);
   const [esCelular, setEsCelular] = useState(window.innerWidth < 640);

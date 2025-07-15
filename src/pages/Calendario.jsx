@@ -5,10 +5,9 @@ import {
   startOfMonth,
   endOfMonth,
   eachDayOfInterval,
-  isSameDay,
   isToday,
   getDate,
-  getDay
+  getDay,
 } from "date-fns";
 import { es } from "date-fns/locale";
 import { collection, getDocs, query, orderBy } from "firebase/firestore";
@@ -17,7 +16,6 @@ import Evento from "../components/Evento";
 import { useNavigate } from "react-router-dom";
 import leyendaRI from "../modules/shared/mesesRI";
 import VersionInfo from "../components/VersionInfo";
-/*import "../estilos/evento.css";*/
 
 export default function Calendario({ nivel = "publico" }) {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -25,10 +23,8 @@ export default function Calendario({ nivel = "publico" }) {
   const [eventos, setEventos] = useState([]);
   const [estilosPorTipo, setEstilosPorTipo] = useState({});
   const [actualizado, setActualizado] = useState(false);
-  const navigate = useNavigate();
-
   const [esCelular, setEsCelular] = useState(window.innerWidth < 640);
-  console.log("¿Es celular?", esCelular, "Ancho:", window.innerWidth);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const actualizarTamaño = () => setEsCelular(window.innerWidth < 640);
@@ -47,22 +43,16 @@ export default function Calendario({ nivel = "publico" }) {
           const e = doc.data();
           let fecha;
 
-                // ...
-        if (e.fecha && typeof e.fecha.toDate === "function") {
-          fecha = e.fecha.toDate();
-          fecha.setHours(12, 0, 0, 0); // ✅ Fuerza 12:00 para evitar desfases
-        } else if (typeof e.fecha === "string") {
-            // Si la fecha ya viene como string (e.g., "YYYY-MM-DD"), la parseamos.
-            // Mantener la hora a 12 PM es una buena práctica para evitar problemas de zona horaria al crear el objeto Date.
+          if (e.fecha && typeof e.fecha.toDate === "function") {
+            fecha = e.fecha.toDate();
+            fecha.setHours(12, 0, 0, 0);
+          } else if (typeof e.fecha === "string") {
             const [anio, mes, dia] = e.fecha.split("-").map(Number);
             fecha = new Date(anio, mes - 1, dia, 12);
-        } else {
-            // Fallback por si la fecha no es ni Timestamp ni string
+          } else {
             fecha = new Date();
-        }
-        console.log("✔️ Evento:", e.titulo, "→", fecha.toISOString(), fecha.toLocaleDateString());
+          }
 
-// ...
           eventosCargados.push({ id: doc.id, ...e, fechaObj: fecha });
         });
 
@@ -71,6 +61,7 @@ export default function Calendario({ nivel = "publico" }) {
         console.error("Error al cargar eventos:", error);
       }
     }
+
     fetchEventos();
   }, []);
 
@@ -94,6 +85,7 @@ export default function Calendario({ nivel = "publico" }) {
         console.error("Error cargando estilos por tipo:", error);
       }
     }
+
     cargarEstilos();
   }, []);
 
@@ -129,8 +121,8 @@ export default function Calendario({ nivel = "publico" }) {
   }, [currentDate]);
 
   useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.addEventListener("controllerchange", () => {
         setActualizado(true);
       });
     }
@@ -143,11 +135,13 @@ export default function Calendario({ nivel = "publico" }) {
   const puedeVerEvento = (mostrar) => {
     if (nivel === "junta") return true;
     if (nivel === "socios") return mostrar === "publico" || mostrar === "socios";
-    return mostrar === "publico"; // nivel público
+    return mostrar === "publico";
   };
 
-
-  const hoy = new Date();
+  const mismaFecha = (d1, d2) =>
+    d1.getFullYear() === d2.getFullYear() &&
+    d1.getMonth() === d2.getMonth() &&
+    d1.getDate() === d2.getDate();
 
   return (
     <div className="relative p-4">
@@ -188,51 +182,48 @@ export default function Calendario({ nivel = "publico" }) {
             key={index}
             id={dia ? `dia-${getDate(dia)}` : `vacio-${index}`}
             className={`min-h-[6rem] border p-2 rounded shadow-sm text-center transition-all duration-300 ${
-              dia && isToday(dia) ? "ring-2 ring-blue-500 bg-blue-50 animate-pulse" : "bg-white"
+              dia && isToday(dia)
+                ? "ring-2 ring-blue-500 bg-blue-50 animate-pulse"
+                : "bg-white"
             }`}
           >
             <div className="text-xs text-gray-500">
               {dia ? format(dia, "eee dd", { locale: es }) : ""}
             </div>
-            {dia && eventos
-              .filter((e) => {
-                if (!e.fechaObj || !dia) return false;
-                return (
-                  e.fechaObj.getFullYear() === dia.getFullYear() &&
-                  e.fechaObj.getMonth() === dia.getMonth() &&
-                  e.fechaObj.getDate() === dia.getDate()
-                );
-              })
-              .filter((e) => puedeVerEvento(e.mostrar))
-              .sort((a, b) => {
-                const ha = a.horaInicio || "00:00";
-                const hb = b.horaInicio || "00:00";
-                return ha.localeCompare(hb);
-              })
-              .map((evento) => {
-                const tipo = evento.tipo?.toLowerCase() || "default";
-                const estilo = estilosPorTipo[tipo] || estilosPorTipo["default"];
-                return (
-                  <div key={evento.id}>
-                    {nivel === "junta" && evento.mostrar === "junta" && (
-                      <div className="text-[0.65rem] font-bold text-red-500 uppercase mb-1">
-                        🔒 Vista: Junta
-                      </div>
-                    )}
-                    {nivel === "junta" && evento.mostrar === "socios" && (
-                      <div className="text-[0.65rem] font-bold text-yellow-600 uppercase mb-1">
-                        🔐 Vista: Socios
-                      </div>
-                    )}
-                    {nivel === "junta" && (!evento.mostrar || evento.mostrar === "publico") && (
-                      <div className="text-[0.65rem] font-bold text-green-600 uppercase mb-1">
-                        🌐 Vista: Público
-                      </div>
-                    )}
-                    <Evento evento={evento} estilo={estilo} />
-                  </div>
-                );
-              })}
+            {dia &&
+              eventos
+                .filter((e) => e.fechaObj && dia && mismaFecha(e.fechaObj, dia))
+                .filter((e) => puedeVerEvento(e.mostrar))
+                .sort((a, b) => {
+                  const ha = a.horaInicio || "00:00";
+                  const hb = b.horaInicio || "00:00";
+                  return ha.localeCompare(hb);
+                })
+                .map((evento) => {
+                  const tipo = evento.tipo?.toLowerCase() || "default";
+                  const estilo = estilosPorTipo[tipo] || estilosPorTipo["default"];
+                  return (
+                    <div key={evento.id}>
+                      {nivel === "junta" && evento.mostrar === "junta" && (
+                        <div className="text-[0.65rem] font-bold text-red-500 uppercase mb-1">
+                          🔒 Vista: Junta
+                        </div>
+                      )}
+                      {nivel === "junta" && evento.mostrar === "socios" && (
+                        <div className="text-[0.65rem] font-bold text-yellow-600 uppercase mb-1">
+                          🔐 Vista: Socios
+                        </div>
+                      )}
+                      {nivel === "junta" &&
+                        (!evento.mostrar || evento.mostrar === "publico") && (
+                          <div className="text-[0.65rem] font-bold text-green-600 uppercase mb-1">
+                            🌐 Vista: Público
+                          </div>
+                        )}
+                      <Evento evento={evento} estilo={estilo} />
+                    </div>
+                  );
+                })}
           </div>
         ))}
       </div>
@@ -240,22 +231,24 @@ export default function Calendario({ nivel = "publico" }) {
       <VersionInfo nivel={nivel} />
 
       {actualizado && (
-        <div style={{
-          position: 'fixed',
-          bottom: 60,
-          right: 10,
-          backgroundColor: '#0f4c81',
-          color: 'white',
-          padding: '6px 12px',
-          borderRadius: '8px',
-          fontSize: '0.75rem',
-          boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
-          zIndex: 1001,
-          cursor: 'pointer'
-        }}
-        onClick={() => window.location.reload()}
+        <div
+          style={{
+            position: "fixed",
+            bottom: 60,
+            right: 10,
+            backgroundColor: "#0f4c81",
+            color: "white",
+            padding: "6px 12px",
+            borderRadius: "8px",
+            fontSize: "0.75rem",
+            boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
+            zIndex: 1001,
+            cursor: "pointer",
+          }}
+          onClick={() => window.location.reload()}
         >
-          🔄 Nueva versión disponible<br />
+          🔄 Nueva versión disponible
+          <br />
           Tocá para actualizar
         </div>
       )}

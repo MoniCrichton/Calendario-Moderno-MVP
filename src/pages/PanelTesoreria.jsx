@@ -54,23 +54,24 @@ export default function PanelTesoreria() {
       }
     });
     lista.forEach((r) => {
-    if (r.fechaVencimiento?.toDate) {
-      const fecha = r.fechaVencimiento.toDate();
-      fecha.setDate(fecha.getDate() + 1);
-      r.fechaVencimiento = fecha;
-    }
-    if (r.fechaPago?.toDate) {
-      const fecha = r.fechaPago.toDate();
-      fecha.setDate(fecha.getDate() + 1);
-      r.fechaPago = fecha;
-    }
-  });
+  if (r.fechaVencimiento?.toDate) {
+    const f = r.fechaVencimiento.toDate();
+    f.setHours(12, 0, 0, 0);
+    r.fechaVencimiento = f;
+  }
+  if (r.fechaPago?.toDate) {
+    const f = r.fechaPago.toDate();
+    f.setHours(12, 0, 0, 0);
+    r.fechaPago = f;
+  }
+});
 
-  lista.sort((a, b) => {
-    const fechaA = a.fechaVencimiento ?? new Date(a.fechaVencimiento);
-    const fechaB = b.fechaVencimiento ?? new Date(b.fechaVencimiento);
-    return fechaA - fechaB;
-  });
+lista.sort((a, b) => {
+  const fechaA = a.fechaVencimiento;
+  const fechaB = b.fechaVencimiento;
+  return fechaA - fechaB;
+});
+
 
     setRegistros(lista);
   };

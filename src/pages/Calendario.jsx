@@ -21,9 +21,6 @@ export default function Calendario({ nivel = "publico" }) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [diasDelMes, setDiasDelMes] = useState([]);
   const [eventos, setEventos] = useState([]);
-  useEffect(() => {
-    window.eventos = eventos;
-  }, [eventos]);
   const [estilosPorTipo, setEstilosPorTipo] = useState({});
   const [actualizado, setActualizado] = useState(false);
   const [esCelular, setEsCelular] = useState(window.innerWidth < 640);
@@ -135,32 +132,20 @@ export default function Calendario({ nivel = "publico" }) {
     setCurrentDate((prev) => addMonths(prev, offset));
   };
 
-  const puedeVerEvento = (mostrar) => {
-  const nivelNormalizado = nivel?.toLowerCase()?.trim();
-  const mostrarNormalizado = mostrar?.toLowerCase()?.trim();
+  const puedeVerEvento = (mostrarRaw) => {
+    const nivelNormalizado = nivel?.toLowerCase()?.trim();
+    const mostrar = mostrarRaw?.toLowerCase()?.trim();
 
-  if (nivelNormalizado === "junta") {
-    return (
-      mostrarNormalizado === "junta" ||
-      mostrarNormalizado === "socios" ||
-      mostrarNormalizado === "publico"
-    );
-  }
+    if (nivelNormalizado === "junta") {
+      return mostrar === "junta" || mostrar === "socios" || mostrar === "publico";
+    }
 
-  if (nivelNormalizado === "socios") {
-    return mostrarNormalizado === "socios" || mostrarNormalizado === "publico";
-  }
+    if (nivelNormalizado === "socios") {
+      return mostrar === "socios" || mostrar === "publico";
+    }
 
-  return mostrarNormalizado === "publico";
-};
-console.log(`[FILTRO] Nivel: ${nivel}, Mostrar: ${mostrar} → ${puedeVerEvento(mostrar)}`);
-
-  const mismaFecha = (d1, d2) =>
-    d1.getFullYear() === d2.getFullYear() &&
-    d1.getMonth() === d2.getMonth() &&
-    d1.getDate() === d2.getDate();
-
-    console.log("✅ NIVEL ACTUAL:", nivel);
+    return mostrar === "publico";
+  };
 
   return (
     <div className="relative p-4">
@@ -197,58 +182,58 @@ console.log(`[FILTRO] Nivel: ${nivel}, Mostrar: ${mostrar} → ${puedeVerEvento(
 
       <div className="grid gap-2 grid-cols-2 md:grid-cols-7">
         {diasDelMes.map((dia, index) => (
-  <div
-    key={index}
-    id={dia ? `dia-${getDate(dia)}` : `vacio-${index}`}
-    className={`min-h-[6rem] border p-2 rounded shadow-sm text-center transition-all duration-300 ${
-      dia && isToday(dia) ? "ring-2 ring-blue-500 bg-blue-50 animate-pulse" : "bg-white"
-    }`}
-  >
-    <div className="text-xs text-gray-500">
-      {dia ? format(dia, "eee dd", { locale: es }) : ""}
-    </div>
-    {dia && eventos
-      .filter((e) => {
-        if (!e.fechaObj || !dia) return false;
-        const fechaEvento = new Date(e.fechaObj);
-        fechaEvento.setHours(0, 0, 0, 0);
-        const diaComparado = new Date(dia);
-        diaComparado.setHours(0, 0, 0, 0);
-        return fechaEvento.getTime() === diaComparado.getTime();
-      })
-      .filter((e) => puedeVerEvento(e.mostrar))
-      .sort((a, b) => {
-        const ha = a.horaInicio || "00:00";
-        const hb = b.horaInicio || "00:00";
-        return ha.localeCompare(hb);
-      })
-      .map((evento) => {
-        const tipo = evento.tipo?.toLowerCase() || "default";
-        const estilo = estilosPorTipo[tipo] || estilosPorTipo["default"];
-        return (
-          <div key={evento.id}>
-            {nivel === "junta" && evento.mostrar === "junta" && (
-              <div className="text-[0.65rem] font-bold text-red-500 uppercase mb-1">
-                🔒 Vista: Junta
-              </div>
-            )}
-            {nivel === "junta" && evento.mostrar === "socios" && (
-              <div className="text-[0.65rem] font-bold text-yellow-600 uppercase mb-1">
-                🔐 Vista: Socios
-              </div>
-            )}
-            {nivel === "junta" && (!evento.mostrar || evento.mostrar === "publico") && (
-              <div className="text-[0.65rem] font-bold text-green-600 uppercase mb-1">
-                🌐 Vista: Público
-              </div>
-            )}
-            <Evento evento={evento} estilo={estilo} />
+          <div
+            key={index}
+            id={dia ? `dia-${getDate(dia)}` : `vacio-${index}`}
+            className={`min-h-[6rem] border p-2 rounded shadow-sm text-center transition-all duration-300 ${
+              dia && isToday(dia) ? "ring-2 ring-blue-500 bg-blue-50 animate-pulse" : "bg-white"
+            }`}
+          >
+            <div className="text-xs text-gray-500">
+              {dia ? format(dia, "eee dd", { locale: es }) : ""}
+            </div>
+            {dia && eventos
+              .filter((e) => {
+                if (!e.fechaObj || !dia) return false;
+                const fechaEvento = new Date(e.fechaObj);
+                fechaEvento.setHours(0, 0, 0, 0);
+                const diaComparado = new Date(dia);
+                diaComparado.setHours(0, 0, 0, 0);
+                return fechaEvento.getTime() === diaComparado.getTime();
+              })
+              .filter((e) => puedeVerEvento(e.mostrar))
+              .sort((a, b) => {
+                const ha = a.horaInicio || "00:00";
+                const hb = b.horaInicio || "00:00";
+                return ha.localeCompare(hb);
+              })
+              .map((evento) => {
+                const tipo = evento.tipo?.toLowerCase() || "default";
+                const estilo = estilosPorTipo[tipo] || estilosPorTipo["default"];
+                return (
+                  <div key={evento.id}>
+                    {nivel === "junta" && evento.mostrar === "junta" && (
+                      <div className="text-[0.65rem] font-bold text-red-500 uppercase mb-1">
+                        🔒 Vista: Junta
+                      </div>
+                    )}
+                    {nivel === "junta" && evento.mostrar === "socios" && (
+                      <div className="text-[0.65rem] font-bold text-yellow-600 uppercase mb-1">
+                        🔐 Vista: Socios
+                      </div>
+                    )}
+                    {nivel === "junta" && (!evento.mostrar || evento.mostrar === "publico") && (
+                      <div className="text-[0.65rem] font-bold text-green-600 uppercase mb-1">
+                        🌐 Vista: Público
+                      </div>
+                    )}
+                    <Evento evento={evento} estilo={estilo} />
+                  </div>
+                );
+              })}
           </div>
-        );
-      })}
-  </div>
-))}
-   </div> {/* ← cierre correcto del grid */}
+        ))}
+      </div>
 
       <VersionInfo nivel={nivel} />
 

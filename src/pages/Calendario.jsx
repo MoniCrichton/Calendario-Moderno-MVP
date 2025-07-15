@@ -212,7 +212,10 @@ export default function Calendario({ nivel = "publico" }) {
               .map((evento) => {
                 const tipo = evento.tipo?.toLowerCase() || "default";
                 const estilo = estilosPorTipo[tipo] || estilosPorTipo["default"];
+                console.log("Nivel:", nivel, "| Mostrar:", evento.mostrar, "| Pasa filtro?", puedeVerEvento(evento.mostrar));
+
                 return (
+            
                   <div key={evento.id}>
                     {nivel === "junta" && evento.mostrar === "junta" && (
                       <div className="text-[0.65rem] font-bold text-red-500 uppercase mb-1">

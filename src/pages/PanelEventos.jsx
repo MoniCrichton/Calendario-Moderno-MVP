@@ -111,8 +111,15 @@ export default function PanelEventos() {
       return;
     }
 
-    const [anio, mes, dia] = evento.fecha.split("-").map(Number);
-    const fecha = new Date(anio, mes - 1, dia);
+    let fecha;
+    if (typeof evento.fecha === "string") {
+      const [anio, mes, dia] = evento.fecha.split("-").map(Number);
+      fecha = new Date(anio, mes - 1, dia);
+    } else if (evento.fecha?.toDate) {
+      fecha = evento.fecha.toDate(); // si es Timestamp
+    } else {
+      fecha = new Date(evento.fecha); // si ya es Date
+    }
     fecha.setHours(12, 0, 0, 0);
 
     const eventoFinal = {

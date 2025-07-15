@@ -58,7 +58,6 @@ export default function PanelEventos() {
         typeof data.fecha === "object" && data.fecha.toDate
           ? data.fecha.toDate()
           : new Date(data.fecha);
-      fecha.setDate(fecha.getDate() + 1); // 👈 Ajuste para compensar zona horaria
 
       lista.push({
         id: docSnap.id,

@@ -46,14 +46,25 @@ export default function Calendario({ nivel = "publico" }) {
         querySnapshot.forEach((doc) => {
           const e = doc.data();
           let fecha;
-          if (e.fecha.toDate) {
-            fecha = e.fecha.toDate(); // ✅ Usamos lo que viene de Firebase sin tocar la hora
-          } else if (typeof e.fecha === "string") {
+
+                // ...
+        if (e.fecha && typeof e.fecha.toDate === 'function') { // Asegúrate de que sea un Timestamp de Firebase
+            // 1. Convierte el Timestamp de Firebase a un objeto Date de JS (que ya estará en la zona horaria local).
+            // 2. Obtén la parte de la fecha (YYYY-MM-DD) de su representación UTC (ISO string).
+            // 3. Crea un *nuevo* objeto Date de JS a partir de esa cadena YYYY-MM-DD.
+            // Esto fuerza a JS a interpretar esa fecha como el inicio de ese día en la zona horaria local,
+            // corrigiendo el desfase de medianoche UTC.
+            fecha = new Date(e.fecha.toDate().toISOString().split('T')[0]);
+        } else if (typeof e.fecha === "string") {
+            // Si la fecha ya viene como string (e.g., "YYYY-MM-DD"), la parseamos.
+            // Mantener la hora a 12 PM es una buena práctica para evitar problemas de zona horaria al crear el objeto Date.
             const [anio, mes, dia] = e.fecha.split("-").map(Number);
             fecha = new Date(anio, mes - 1, dia, 12);
-          } else {
+        } else {
+            // Fallback por si la fecha no es ni Timestamp ni string
             fecha = new Date();
-          }
+        }
+// ...
           eventosCargados.push({ id: doc.id, ...e, fechaObj: fecha });
         });
 

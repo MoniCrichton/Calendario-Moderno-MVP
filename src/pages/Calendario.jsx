@@ -140,12 +140,12 @@ export default function Calendario({ nivel = "publico" }) {
     setCurrentDate((prev) => addMonths(prev, offset));
   };
 
-  const puedeVerEvento = (nivelMostrar) => {
-    if (!nivelMostrar || nivelMostrar === "general") return true;
-    if (nivelMostrar === "socios") return nivel === "socio" || nivel === "junta";
-    if (nivelMostrar === "junta") return nivel === "junta";
-    return false;
+  const puedeVerEvento = (mostrar) => {
+    if (nivel === "junta") return true;
+    if (nivel === "socios") return mostrar === "general" || mostrar === "socios";
+    return mostrar === "general"; // nivel público
   };
+
 
   const hoy = new Date();
 

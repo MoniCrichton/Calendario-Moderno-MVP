@@ -136,15 +136,31 @@ export default function Calendario({ nivel = "publico" }) {
   };
 
   const puedeVerEvento = (mostrar) => {
-    if (nivel === "junta") return true;
-    if (nivel === "socios") return mostrar === "publico" || mostrar === "socios";
-    return mostrar === "publico";
-  };
+  const nivelNormalizado = nivel?.toLowerCase()?.trim();
+  const mostrarNormalizado = mostrar?.toLowerCase()?.trim();
+
+  if (nivelNormalizado === "junta") {
+    return (
+      mostrarNormalizado === "junta" ||
+      mostrarNormalizado === "socios" ||
+      mostrarNormalizado === "publico"
+    );
+  }
+
+  if (nivelNormalizado === "socios") {
+    return mostrarNormalizado === "socios" || mostrarNormalizado === "publico";
+  }
+
+  return mostrarNormalizado === "publico";
+};
+console.log(`[FILTRO] Nivel: ${nivel}, Mostrar: ${mostrar} → ${puedeVerEvento(mostrar)}`);
 
   const mismaFecha = (d1, d2) =>
     d1.getFullYear() === d2.getFullYear() &&
     d1.getMonth() === d2.getMonth() &&
     d1.getDate() === d2.getDate();
+
+    console.log("✅ NIVEL ACTUAL:", nivel);
 
   return (
     <div className="relative p-4">

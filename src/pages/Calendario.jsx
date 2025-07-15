@@ -178,55 +178,58 @@ export default function Calendario({ nivel = "publico" }) {
 
       <div className="grid gap-2 grid-cols-2 md:grid-cols-7">
         {diasDelMes.map((dia, index) => (
-          <div
-            key={index}
-            id={dia ? `dia-${getDate(dia)}` : `vacio-${index}`}
-            className={`min-h-[6rem] border p-2 rounded shadow-sm text-center transition-all duration-300 ${
-              dia && isToday(dia)
-                ? "ring-2 ring-blue-500 bg-blue-50 animate-pulse"
-                : "bg-white"
-            }`}
-          >
-            <div className="text-xs text-gray-500">
-              {dia ? format(dia, "eee dd", { locale: es }) : ""}
-            </div>
-            {dia &&
-              eventos
-                .filter((e) => e.fechaObj && dia && mismaFecha(e.fechaObj, dia))
-                .filter((e) => puedeVerEvento(e.mostrar))
-                .sort((a, b) => {
-                  const ha = a.horaInicio || "00:00";
-                  const hb = b.horaInicio || "00:00";
-                  return ha.localeCompare(hb);
-                })
-                .map((evento) => {
-                  const tipo = evento.tipo?.toLowerCase() || "default";
-                  const estilo = estilosPorTipo[tipo] || estilosPorTipo["default"];
-                  return (
-                    <div key={evento.id}>
-                      {nivel === "junta" && evento.mostrar === "junta" && (
-                        <div className="text-[0.65rem] font-bold text-red-500 uppercase mb-1">
-                          🔒 Vista: Junta
-                        </div>
-                      )}
-                      {nivel === "junta" && evento.mostrar === "socios" && (
-                        <div className="text-[0.65rem] font-bold text-yellow-600 uppercase mb-1">
-                          🔐 Vista: Socios
-                        </div>
-                      )}
-                      {nivel === "junta" &&
-                        (!evento.mostrar || evento.mostrar === "publico") && (
-                          <div className="text-[0.65rem] font-bold text-green-600 uppercase mb-1">
-                            🌐 Vista: Público
-                          </div>
-                        )}
-                      <Evento evento={evento} estilo={estilo} />
-                    </div>
-                  );
-                })}
+  <div
+    key={index}
+    id={dia ? `dia-${getDate(dia)}` : `vacio-${index}`}
+    className={`min-h-[6rem] border p-2 rounded shadow-sm text-center transition-all duration-300 ${
+      dia && isToday(dia) ? "ring-2 ring-blue-500 bg-blue-50 animate-pulse" : "bg-white"
+    }`}
+  >
+    <div className="text-xs text-gray-500">
+      {dia ? format(dia, "eee dd", { locale: es }) : ""}
+    </div>
+    {dia && eventos
+      .filter((e) => {
+        if (!e.fechaObj || !dia) return false;
+        const fechaEvento = new Date(e.fechaObj);
+        fechaEvento.setHours(0, 0, 0, 0);
+        const diaComparado = new Date(dia);
+        diaComparado.setHours(0, 0, 0, 0);
+        return fechaEvento.getTime() === diaComparado.getTime();
+      })
+      .filter((e) => puedeVerEvento(e.mostrar))
+      .sort((a, b) => {
+        const ha = a.horaInicio || "00:00";
+        const hb = b.horaInicio || "00:00";
+        return ha.localeCompare(hb);
+      })
+      .map((evento) => {
+        const tipo = evento.tipo?.toLowerCase() || "default";
+        const estilo = estilosPorTipo[tipo] || estilosPorTipo["default"];
+        return (
+          <div key={evento.id}>
+            {nivel === "junta" && evento.mostrar === "junta" && (
+              <div className="text-[0.65rem] font-bold text-red-500 uppercase mb-1">
+                🔒 Vista: Junta
+              </div>
+            )}
+            {nivel === "junta" && evento.mostrar === "socios" && (
+              <div className="text-[0.65rem] font-bold text-yellow-600 uppercase mb-1">
+                🔐 Vista: Socios
+              </div>
+            )}
+            {nivel === "junta" && (!evento.mostrar || evento.mostrar === "publico") && (
+              <div className="text-[0.65rem] font-bold text-green-600 uppercase mb-1">
+                🌐 Vista: Público
+              </div>
+            )}
+            <Evento evento={evento} estilo={estilo} />
           </div>
-        ))}
-      </div>
+        );
+      })}
+  </div>
+))}
+   </div> {/* ← cierre correcto del grid */}
 
       <VersionInfo nivel={nivel} />
 

@@ -142,8 +142,8 @@ export default function Calendario({ nivel = "publico" }) {
 
   const puedeVerEvento = (mostrar) => {
     if (nivel === "junta") return true;
-    if (nivel === "socios") return mostrar === "general" || mostrar === "socios";
-    return mostrar === "general"; // nivel público
+    if (nivel === "socios") return mostrar === "publico" || mostrar === "socios";
+    return mostrar === "publico"; // nivel público
   };
 
 
@@ -217,7 +217,7 @@ export default function Calendario({ nivel = "publico" }) {
                         🔐 Vista: Socios
                       </div>
                     )}
-                    {nivel === "junta" && (!evento.mostrar || evento.mostrar === "general") && (
+                    {nivel === "junta" && (!evento.mostrar || evento.mostrar === "publico") && (
                       <div className="text-[0.65rem] font-bold text-green-600 uppercase mb-1">
                         🌐 Vista: Público
                       </div>

@@ -104,47 +104,49 @@ export default function PanelEventos() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const fecha = new Date(evento.fecha);
-      fecha.setHours(12, 0, 0, 0);
-      if (!evento.fecha) {
-        alert("Por favor seleccioná una fecha válida.");
-        return;
-      }
-      const eventoFinal = {
-        ...evento,
-        horaInicio: sinHora ? "" : evento.horaInicio,
-        horaFin: sinHora ? "" : evento.horaFin,
-        creadoEn: Timestamp.now(),
-        fecha: Timestamp.fromDate(fecha),
-      };
-
-      if (evento.id) {
-        const docRef = doc(db, "eventos", evento.id);
-        await updateDoc(docRef, eventoFinal);
-        alert("Evento modificado correctamente");
-      } else {
-        await addDoc(collection(db, "eventos"), eventoFinal);
-        alert("Evento agregado correctamente");
-      }
-
-      setEvento({
-        id: null,
-        titulo: "",
-        tipo: "",
-        detalles: "",
-        fecha: "",
-        horaInicio: "",
-        horaFin: "",
-        mostrar: "publico",
-      });
-      setSinHora(false);
-      cargarEventos();
-    } catch (error) {
-      alert("Error al guardar evento: " + error.message);
+  e.preventDefault();
+  try {
+    if (!evento.fecha) {
+      alert("Por favor seleccioná una fecha válida.");
+      return;
     }
-  };
+
+    const [anio, mes, dia] = evento.fecha.split("-").map(Number);
+    const fecha = new Date(anio, mes - 1, dia);
+    fecha.setHours(12, 0, 0, 0);
+
+    const eventoFinal = {
+      ...evento,
+      horaInicio: sinHora ? "" : evento.horaInicio,
+      horaFin: sinHora ? "" : evento.horaFin,
+      creadoEn: Timestamp.now(),
+      fecha: Timestamp.fromDate(fecha),
+    };
+
+    if (evento.id) {
+      const docRef = doc(db, "eventos", evento.id);
+      await updateDoc(docRef, eventoFinal);
+      alert("Evento modificado correctamente");
+    } else {
+      await addDoc(collection(db, "eventos"), eventoFinal);
+      alert("Evento agregado correctamente");
+    }
+
+    setEvento({
+      titulo: "",
+      tipo: "",
+      detalles: "",
+      fecha: "",
+      horaInicio: "",
+      horaFin: "",
+      mostrar: "publico",
+    });
+    setSinHora(false);
+    cargarEventos();
+  } catch (error) {
+    alert("Error al guardar evento: " + error.message);
+  }
+};
 
   const editarEvento = (evento) => {
     setEvento(evento);

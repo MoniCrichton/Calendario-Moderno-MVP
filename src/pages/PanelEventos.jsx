@@ -53,18 +53,29 @@ export default function PanelEventos() {
     const querySnapshot = await getDocs(q);
     const lista = [];
     querySnapshot.forEach((docSnap) => {
-      const data = docSnap.data();
-      const fecha =
-        typeof data.fecha === "object" && data.fecha.toDate
-          ? data.fecha.toDate()
-          : new Date(data.fecha);
+          const data = docSnap.data();
 
-      lista.push({
-        id: docSnap.id,
-        ...data,
-        fecha: fecha.toISOString().split("T")[0],
-      }); 
+          let fechaObj;
+          if (data.fecha && typeof data.fecha === "object" && data.fecha.toDate) {
+            fechaObj = data.fecha.toDate();
+          } else if (typeof data.fecha === "string") {
+            const [anio, mes, dia] = data.fecha.split("-").map(Number);
+            if (anio && mes && dia) {
+              fechaObj = new Date(anio, mes - 1, dia, 12); // default a mediodía
+            } else {
+              console.warn("Fecha inválida:", data.fecha);
+              return; // skip evento inválido
+            }
+          } else {
+            console.warn("Evento sin fecha:", docSnap.id);
+            return; // skip evento inválido
+          }
 
+          lista.push({
+            id: docSnap.id,
+            ...data,
+            fecha: fechaObj.toISOString().split("T")[0], // 🟢 garantizado válido
+          });
     });
 
     lista.sort((a, b) => {
@@ -97,7 +108,10 @@ export default function PanelEventos() {
     try {
       const fecha = new Date(evento.fecha);
       fecha.setHours(12, 0, 0, 0);
-
+      if (!evento.fecha) {
+        alert("Por favor seleccioná una fecha válida.");
+        return;
+      }
       const eventoFinal = {
         ...evento,
         horaInicio: sinHora ? "" : evento.horaInicio,

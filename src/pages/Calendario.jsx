@@ -47,8 +47,7 @@ export default function Calendario({ nivel = "publico" }) {
           const e = doc.data();
           let fecha;
           if (e.fecha.toDate) {
-            fecha = e.fecha.toDate();
-            fecha.setHours(12, 0, 0, 0);
+            fecha = e.fecha.toDate(); // ✅ Usamos lo que viene de Firebase sin tocar la hora
           } else if (typeof e.fecha === "string") {
             const [anio, mes, dia] = e.fecha.split("-").map(Number);
             fecha = new Date(anio, mes - 1, dia, 12);

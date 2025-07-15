@@ -31,7 +31,7 @@ export default function CalendarioTesoreria() {
       });
       setEventos(eventosFiltrados);
 
-      const res = await fetch("/data/tesoreria-type_styles.json");
+      const res = await fetch("/data/tesoreria_type_styles.json");
       const tipostesoreria = await res.json();
       const map = {};
       tipostesoreria.forEach((s) => {

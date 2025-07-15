@@ -34,7 +34,7 @@ export default function PanelTesoreria() {
 
   useEffect(() => {
     cargarRegistros();
-    fetch("/data/tesoreria_type_styles.json")
+    fetch("../data/tesoreria_type_styles.json")
       .then((res) => res.json())
       .then((data) => {
         const tipos = data.map((d) => d.tipo).sort();

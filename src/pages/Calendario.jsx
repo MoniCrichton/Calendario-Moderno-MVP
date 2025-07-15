@@ -195,7 +195,14 @@ export default function Calendario({ nivel = "publico" }) {
               {dia ? format(dia, "eee dd", { locale: es }) : ""}
             </div>
             {dia && eventos
-              .filter((e) => isSameDay(e.fechaObj, dia))
+              .filter((e) => {
+                if (!e.fechaObj || !dia) return false;
+                return (
+                  e.fechaObj.getFullYear() === dia.getFullYear() &&
+                  e.fechaObj.getMonth() === dia.getMonth() &&
+                  e.fechaObj.getDate() === dia.getDate()
+                );
+              })
               .filter((e) => puedeVerEvento(e.mostrar))
               .sort((a, b) => {
                 const ha = a.horaInicio || "00:00";

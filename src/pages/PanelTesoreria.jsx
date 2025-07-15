@@ -132,7 +132,7 @@ lista.sort((a, b) => {
       }
 
       setRegistro({
-        ...prev,
+        ...registro,
         concepto: "",
         tipo: "",
         fechaVencimiento: "",
@@ -149,9 +149,6 @@ lista.sort((a, b) => {
       alert("Error: " + error.message);
     }
   };
-
-  console.log("Evento creado con ID:", docRef.id);
-  console.log("Evento actualizado con ID:", registro.id);
 
   const editarRegistro = (registro) => {
     setRegistro(registro);

@@ -13,7 +13,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/calendario" element={<Calendario nivel="publico" />} />
-        <Route path="/calendario-socios" element={<Calendario nivel="socio" />} />
+        <Route path="/calendario-socios" element={<Calendario nivel="socios" />} />
         <Route path="/calendario-junta" element={<Calendario nivel="junta" />} />
         <Route path="/calendario-tesoreria" element={<CalendarioTesoreria />} />
         <Route path="/admin" element={<PanelEventos />} /> {/* ✅ Esta es la línea nueva */}

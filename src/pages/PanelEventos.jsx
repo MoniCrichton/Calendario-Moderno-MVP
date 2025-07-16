@@ -147,6 +147,9 @@ export default function PanelEventos() {
       horaInicio: "",
       horaFin: "",
       mostrar: "publico",
+      repetir: false,
+      frecuencia: "",
+      hasta: ""
     });
     setSinHora(false);
     cargarEventos();
@@ -273,6 +276,24 @@ export default function PanelEventos() {
           <option value="socios">Socios</option>
           <option value="junta">Junta</option>
         </select>
+        <label className="flex items-center gap-2">
+          <input type="checkbox" name="repetir" checked={evento.repetir} onChange={handleCheckbox} />
+          Repetir evento
+        </label>
+
+        {evento.repetir && (
+          <>
+            <select name="frecuencia" value={evento.frecuencia} onChange={handleChange} className="border p-2 rounded">
+              <option value="">Frecuencia</option>
+              <option value="diaria">Diaria</option>
+              <option value="semanal">Semanal</option>
+              <option value="mensual">Mensual</option>
+              <option value="anual">Anual</option>
+            </select>
+            <input type="date" name="hasta" value={evento.hasta} onChange={handleChange} className="border p-2 rounded" required />
+          </>
+        )}
+
         <button type="submit" className="bg-blue-600 text-white py-2 rounded">
           {evento.id ? "Actualizar" : "Guardar"}
         </button>

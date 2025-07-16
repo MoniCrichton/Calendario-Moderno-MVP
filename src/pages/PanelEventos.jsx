@@ -111,52 +111,85 @@ export default function PanelEventos() {
 };
 
 
-  const handleSubmit = async (e) => {
+const handleSubmit = async (e) => {
   e.preventDefault();
+
   try {
     if (!evento.fecha) {
       alert("Por favor seleccioná una fecha válida.");
       return;
     }
 
-    const parseFecha = (str) => {
-      const [anio, mes, dia] = str.split("-").map(Number);
-      const fecha = new Date(anio, mes - 1, dia);
-      fecha.setHours(12, 0, 0, 0);
-      return fecha;
-    };
+    // Parsear fecha de inicio
+    let fechaInicio = new Date(evento.fecha);
+    fechaInicio.setHours(12, 0, 0, 0);
 
-    const obtenerFechasRepetidas = () => {
-      const fechas = [];
-      let actual = parseFecha(evento.fecha);
-      const fin = parseFecha(evento.hasta);
-      while (actual <= fin) {
-        fechas.push(new Date(actual));
-        if (evento.frecuencia === "diaria") actual.setDate(actual.getDate() + 1);
-        else if (evento.frecuencia === "semanal") actual.setDate(actual.getDate() + 7);
-        else if (evento.frecuencia === "mensual") actual.setMonth(actual.getMonth() + 1);
-        else if (evento.frecuencia === "anual") actual.setFullYear(actual.getFullYear() + 1);
-        else break;
-      }
-      return fechas;
-    };
-
-    const fechas = evento.repetir ? obtenerFechasRepetidas() : [parseFecha(evento.fecha)];
-
-    for (const fecha of fechas) {
+    // Si no repite: solo uno
+    if (!evento.repetir) {
       const eventoFinal = {
         ...eventoSinId,
         horaInicio: sinHora ? "" : evento.horaInicio,
         horaFin: sinHora ? "" : evento.horaFin,
         creadoEn: Timestamp.now(),
-        fecha: Timestamp.fromDate(fecha),
+        fecha: Timestamp.fromDate(fechaInicio),
       };
-      delete eventoFinal.id;
-      await addDoc(collection(db, "eventos"), eventoFinal);
+
+      if (evento.id) {
+        const docRef = doc(db, "eventos", evento.id);
+        await updateDoc(docRef, eventoFinal);
+        alert("Evento modificado correctamente");
+      } else {
+        await addDoc(collection(db, "eventos"), eventoFinal);
+        alert("Evento agregado correctamente");
+      }
+
+    } else {
+      // Parsear fecha final
+      let fechaFin = new Date(evento.hasta);
+      fechaFin.setHours(12, 0, 0, 0);
+
+      let fechas = [];
+      let actual = new Date(fechaInicio);
+
+      while (actual <= fechaFin) {
+        fechas.push(new Date(actual)); // Clonar
+
+        switch (evento.frecuencia) {
+          case "diaria":
+            actual.setDate(actual.getDate() + 1);
+            break;
+          case "semanal":
+            actual.setDate(actual.getDate() + 7);
+            break;
+          case "mensual":
+            actual.setMonth(actual.getMonth() + 1);
+            break;
+          case "anual":
+            actual.setFullYear(actual.getFullYear() + 1);
+            break;
+          default:
+            alert("Frecuencia inválida.");
+            return;
+        }
+      }
+
+      const batch = fechas.map(async (fecha) => {
+        const nuevoEvento = {
+          ...evento,
+          horaInicio: sinHora ? "" : evento.horaInicio,
+          horaFin: sinHora ? "" : evento.horaFin,
+          creadoEn: Timestamp.now(),
+          fecha: Timestamp.fromDate(fecha),
+        };
+        delete nuevoEvento.id; // importante
+        return await addDoc(collection(db, "eventos"), nuevoEvento);
+      });
+
+      await Promise.all(batch);
+      alert(`Se agregaron ${fechas.length} eventos repetidos.`);
     }
 
-    alert("Evento" + (evento.repetir ? "s repetidos " : "") + "agregado correctamente");
-
+    // Reset
     setEvento({
       titulo: "",
       tipo: "",
@@ -171,10 +204,12 @@ export default function PanelEventos() {
     });
     setSinHora(false);
     cargarEventos();
+
   } catch (error) {
     alert("Error al guardar evento: " + error.message);
   }
 };
+
 
 
   const editarEvento = (evento) => {

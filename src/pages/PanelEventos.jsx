@@ -174,6 +174,7 @@ const handleSubmit = async (e) => {
       }
 
       const batch = fechas.map(async (fecha) => {
+        fecha.setHours(12, 0, 0, 0);
         const nuevoEvento = {
           ...evento,
           horaInicio: sinHora ? "" : evento.horaInicio,

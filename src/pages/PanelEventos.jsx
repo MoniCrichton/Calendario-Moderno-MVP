@@ -119,33 +119,43 @@ export default function PanelEventos() {
       return;
     }
 
-    let fecha;
-    if (typeof evento.fecha === "string") {
-      const [anio, mes, dia] = evento.fecha.split("-").map(Number);
-      fecha = new Date(anio, mes - 1, dia);
-    } else if (evento.fecha?.toDate) {
-      fecha = evento.fecha.toDate(); // si es Timestamp
-    } else {
-      fecha = new Date(evento.fecha); // si ya es Date
-    }
-    fecha.setHours(12, 0, 0, 0);
-
-    const eventoFinal = {
-      ...evento,
-      horaInicio: sinHora ? "" : evento.horaInicio,
-      horaFin: sinHora ? "" : evento.horaFin,
-      creadoEn: Timestamp.now(),
-      fecha: Timestamp.fromDate(fecha),
+    const parseFecha = (str) => {
+      const [anio, mes, dia] = str.split("-").map(Number);
+      const fecha = new Date(anio, mes - 1, dia);
+      fecha.setHours(12, 0, 0, 0);
+      return fecha;
     };
 
-    if (evento.id) {
-      const docRef = doc(db, "eventos", evento.id);
-      await updateDoc(docRef, eventoFinal);
-      alert("Evento modificado correctamente");
-    } else {
+    const obtenerFechasRepetidas = () => {
+      const fechas = [];
+      let actual = parseFecha(evento.fecha);
+      const fin = parseFecha(evento.hasta);
+      while (actual <= fin) {
+        fechas.push(new Date(actual));
+        if (evento.frecuencia === "diaria") actual.setDate(actual.getDate() + 1);
+        else if (evento.frecuencia === "semanal") actual.setDate(actual.getDate() + 7);
+        else if (evento.frecuencia === "mensual") actual.setMonth(actual.getMonth() + 1);
+        else if (evento.frecuencia === "anual") actual.setFullYear(actual.getFullYear() + 1);
+        else break;
+      }
+      return fechas;
+    };
+
+    const fechas = evento.repetir ? obtenerFechasRepetidas() : [parseFecha(evento.fecha)];
+
+    for (const fecha of fechas) {
+      const eventoFinal = {
+        ...eventoSinId,
+        horaInicio: sinHora ? "" : evento.horaInicio,
+        horaFin: sinHora ? "" : evento.horaFin,
+        creadoEn: Timestamp.now(),
+        fecha: Timestamp.fromDate(fecha),
+      };
+      delete eventoFinal.id;
       await addDoc(collection(db, "eventos"), eventoFinal);
-      alert("Evento agregado correctamente");
     }
+
+    alert("Evento" + (evento.repetir ? "s repetidos " : "") + "agregado correctamente");
 
     setEvento({
       titulo: "",
@@ -165,6 +175,7 @@ export default function PanelEventos() {
     alert("Error al guardar evento: " + error.message);
   }
 };
+
 
   const editarEvento = (evento) => {
     setEvento(evento);

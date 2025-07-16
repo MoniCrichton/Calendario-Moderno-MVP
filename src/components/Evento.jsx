@@ -1,4 +1,3 @@
-import React from "react";
 import "../estilos/evento.css";
 
 export default function Evento({ evento, estilo }) {
@@ -6,8 +5,8 @@ export default function Evento({ evento, estilo }) {
     ? { backgroundColor: estilo.color }
     : {};
 
-  // 🟨 Log para verificar si el color se aplica correctamente
-  console.log("Color aplicado:", estilo.color, "para", evento.titulo);
+  // 🟢 Log para debug
+  console.log("🟢 Evento:", evento.titulo, "| Mostrar:", evento.mostrar, "| Tipo:", evento.tipo);
 
   return (
     <div
@@ -16,18 +15,20 @@ export default function Evento({ evento, estilo }) {
       title={`${estilo.emoji} ${evento.titulo}`}
     >
       <div className="font-semibold">
-        <span title={evento.tipo}>{estilo.emoji}</span> {evento.titulo.trim()}
+        <span title={evento.tipo}>{estilo.emoji}</span>{" "}
+        {evento.tipo?.toLowerCase() === "cumpleaños" && evento.fechaObj
+          ? `${evento.titulo.trim()} (${new Date().getFullYear() - evento.fechaObj.getFullYear()})`
+          : evento.titulo.trim()}
       </div>
 
       {evento.horaInicio &&
         !evento.sinHora &&
-        !["cumpleaños", "feriado", "efeméride"].includes(evento.tipo) && (
+        !["cumpleaños", "feriado", "efeméride"].includes(evento.tipo?.toLowerCase()) && (
           <div className="text-gray-700">
             🕒 {evento.horaInicio}
             {evento.horaFin ? ` - ${evento.horaFin}` : ""}
           </div>
       )}
-
 
       {evento.detalles && (
         <div className="text-gray-700">{evento.detalles}</div>

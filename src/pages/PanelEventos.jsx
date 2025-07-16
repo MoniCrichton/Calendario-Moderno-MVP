@@ -25,6 +25,9 @@ export default function PanelEventos() {
     horaInicio: "",
     horaFin: "",
     mostrar: "publico",
+    repetir: false,
+    frecuencia: "",
+    hasta: ""
   });
 
   const [sinHora, setSinHora] = useState(false);
@@ -102,6 +105,11 @@ export default function PanelEventos() {
   const handleChange = (e) => {
     setEvento({ ...evento, [e.target.name]: e.target.value });
   };
+
+  const handleCheckbox = (e) => {
+  setEvento({ ...evento, [e.target.name]: e.target.checked });
+};
+
 
   const handleSubmit = async (e) => {
   e.preventDefault();

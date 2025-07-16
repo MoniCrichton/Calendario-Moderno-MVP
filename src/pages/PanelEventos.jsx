@@ -121,7 +121,7 @@ const handleSubmit = async (e) => {
     }
 
     // Parsear fecha de inicio
-    let fechaInicio = new Date(evento.fecha);
+    let fechaInicio = new Date(evento.fecha + "T12:00:00");
     fechaInicio.setHours(12, 0, 0, 0);
 
     // Si no repite: solo uno
@@ -149,7 +149,9 @@ const handleSubmit = async (e) => {
       fechaFin.setHours(12, 0, 0, 0);
 
       let fechas = [];
-      let actual = new Date(fechaInicio);
+      let actual = new Date(evento.fecha + "T12:00:00");
+      fechaFin.setHours(12, 0, 0, 0);
+
 
       while (actual <= fechaFin) {
         fechas.push(new Date(actual)); // Clonar

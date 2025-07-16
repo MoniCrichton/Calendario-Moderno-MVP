@@ -127,7 +127,7 @@ const handleSubmit = async (e) => {
     // Si no repite: solo uno
     if (!evento.repetir) {
       const eventoFinal = {
-        ...eventoSinId,
+        ...evento,
         horaInicio: sinHora ? "" : evento.horaInicio,
         horaFin: sinHora ? "" : evento.horaFin,
         creadoEn: Timestamp.now(),

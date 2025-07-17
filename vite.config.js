@@ -24,7 +24,7 @@ export default defineConfig({
       createPwaConfig(
         'Calendario Rotary Socios',
         'Calendario Socios',
-        '/calendario-socios',
+        '/', // 👈 ahora inicia en /
         [
           {
             src: '/icons/icon-192.png',
@@ -43,7 +43,7 @@ export default defineConfig({
   build: {
     rollupOptions: {
       input: {
-        'calendario-socios': 'calendario-socios.html',
+        main: 'index.html', // 👈 el de socios renombrado
         'calendario-junta': 'calendario-junta.html',
         'calendario-tesoreria': 'calendario-tesoreria.html',
       },

@@ -16,9 +16,12 @@ export default function Evento({ evento, estilo }) {
     >
       <div className="font-semibold">
         <span title={evento.tipo}>{estilo.emoji}</span>{" "}
-        {evento.tipo?.toLowerCase() === "cumpleaños" && evento.fechaObj
-          ? `${evento.titulo.trim()} (${new Date().getFullYear() - evento.fechaObj.getFullYear()})`
-          : evento.titulo.trim()}
+      {evento.tipo?.toLowerCase() === "cumpleaños" && evento.fechaObj
+      ? (() => {
+          const edad = new Date().getFullYear() - evento.fechaObj.getFullYear();
+          return `${evento.titulo.trim()}${edad > 0 ? ` (${edad})` : ""}`;
+        })()
+      : evento.titulo.trim()}
       </div>
 
       {evento.horaInicio &&

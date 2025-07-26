@@ -46,7 +46,7 @@ export default defineConfig({
         main: 'index.html', // 👈 el de socios renombrado
         'calendario-junta': 'calendario-junta.html',
         'calendario-tesoreria': 'calendario-tesoreria.html',
-        'estado-cuenta-socio': 'estado-cuenta-socio.html',
+        'estado-cuenta': 'estado-cuenta.html',
 
       },
     },

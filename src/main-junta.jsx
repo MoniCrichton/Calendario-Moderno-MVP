@@ -11,3 +11,4 @@ ReactDOM.createRoot(document.getElementById('root')).render(
    <App nivel={import.meta.env.VITE_NIVEL} />
   </React.StrictMode>
 );
+

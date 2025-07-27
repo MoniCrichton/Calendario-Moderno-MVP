@@ -206,10 +206,11 @@ useEffect(() => {
               {dia ? format(dia, "eee dd", { locale: es }) : ""}
             </div>
             {dia && isToday(dia) && (
-            <div className="absolute top-1 right-1 bg-blue-600 text-white text-[0.6rem] px-2 py-[1px] rounded-full shadow">
-              HOY
+            <div className="absolute top-1 right-1 text-blue-600 text-[0.9rem]">
+              ⭐
             </div>
-    )}
+)}
+
 
 
             {dia && eventos

@@ -10,14 +10,14 @@ const views = {
     short_name: "Socios",
   },
   junta: {
-    html: "calendario-junta.html",
-    start_url: "/calendario-junta.html",
+    html: "index.html",
+    start_url: "/",
     name: "Calendario Junta",
     short_name: "Junta",
   },
   tesoreria: {
-    html: "calendario-tesoreria.html",
-    start_url: "/calendario-tesoreria.html",
+    html: "index.html",
+    start_url: "/",
     name: "Calendario Tesorería",
     short_name: "Tesorería",
   },

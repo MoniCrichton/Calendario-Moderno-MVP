@@ -89,6 +89,25 @@ export default function Calendario({ nivel = "publico" }) {
     cargarEstilos();
   }, []);
 
+// ⬇⬇⬇ NUEVO useEffect para hacer scroll solo en celular después de cargar eventos
+useEffect(() => {
+  if (!eventos.length) return;
+
+  if (window.innerWidth < 768) {
+    const hoy = new Date();
+    const id = `dia-${hoy.getFullYear()}-${hoy.getMonth() + 1}-${hoy.getDate()}`;
+    const el = document.getElementById(id);
+    if (el) {
+      setTimeout(() => {
+        el.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }, 400); // podés subir este delay si hiciera falta
+    }
+  }
+}, [eventos]);
+
   useEffect(() => {
     const inicio = startOfMonth(currentDate);
     const fin = endOfMonth(currentDate);
@@ -106,20 +125,8 @@ export default function Calendario({ nivel = "publico" }) {
       const paddingFinal = Array.from({ length: faltantes }, () => null);
       setDiasDelMes([...diasConPadding, ...paddingFinal]);
     }
-
-    const hoy = new Date();
-    if (
-      inicio.getMonth() === hoy.getMonth() &&
-      inicio.getFullYear() === hoy.getFullYear()
-    ) {
-      setTimeout(() => {
-        const hoyId = `dia-${getDate(hoy)}`;
-        const el = document.getElementById(hoyId);
-        if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
-      }, 300);
-    }
   }, [currentDate]);
-
+    
   useEffect(() => {
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.addEventListener("controllerchange", () => {
@@ -186,7 +193,11 @@ export default function Calendario({ nivel = "publico" }) {
         {diasDelMes.map((dia, index) => (
           <div
             key={index}
-            id={dia ? `dia-${getDate(dia)}` : `vacio-${index}`}
+            id={
+              dia
+                ? `dia-${dia.getFullYear()}-${dia.getMonth() + 1}-${dia.getDate()}`
+                : `vacio-${index}`
+            }
             className={`min-h-[6rem] border p-2 rounded shadow-sm text-center transition-all duration-300 ${
               dia && isToday(dia) ? "ring-2 ring-blue-500 bg-blue-50 animate-pulse" : "bg-white"
             }`}
@@ -194,6 +205,10 @@ export default function Calendario({ nivel = "publico" }) {
             <div className="text-xs text-gray-500">
               {dia ? format(dia, "eee dd", { locale: es }) : ""}
             </div>
+            {dia && isToday(dia) && (
+              <div className="text-[0.65rem] font-bold text-blue-600 uppercase mt-1">Hoy</div>
+            )}
+
             {dia && eventos
               .filter((e) => {
                 if (!e.fechaObj || !dia) return false;

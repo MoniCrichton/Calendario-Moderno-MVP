@@ -5,6 +5,7 @@ import NotFound from "./pages/NotFound";
 import PanelEventos from "./pages/PanelEventos";
 import PanelTesoreria from "./pages/PanelTesoreria";
 import CalendarioTesoreria from "./pages/CalendarioTesoreria";
+import Login from "./pages/login";
 
 export default function App({ nivel }) {
   return (

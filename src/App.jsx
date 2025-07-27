@@ -10,7 +10,8 @@ export default function App({ nivel }) {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Home />} />
+       <Route path="/" element={<Home nivel={nivel} />} />
+
 
         {/* Esta ruta usa el nivel que viene como prop desde main-socios.jsx, main-junta.jsx, etc. */}
         <Route path="/calendario" element={<Calendario nivel={nivel} />} />

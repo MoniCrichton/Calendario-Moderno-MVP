@@ -1,11 +1,10 @@
 import React from "react";
 import Calendario from "./Calendario";
 
-export default function Home() {
+export default function Home({ nivel }) {
   return (
     <div className="p-4">
-      {/* Podés agregar más componentes acá si querés */}
-      <Calendario />
+      <Calendario nivel={nivel} />
     </div>
   );
 }

@@ -8,9 +8,10 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "build:junta": "vite build --mode junta",
-    "build:tesoreria": "vite build --mode tesoreria",
-    "build:socios": "vite build --mode socios"
+    "build:socios": "cross-env VISTA_ACTUAL=socios vite build",
+    "build:junta": "cross-env VISTA_ACTUAL=junta vite build",
+    "build:tesoreria": "cross-env VISTA_ACTUAL=tesoreria vite build",
+    "build:estado": "cross-env VISTA_ACTUAL=estado-cuenta vite build"
   },
   "dependencies": {
     "date-fns": "^4.1.0",
@@ -26,6 +27,7 @@
     "@types/react-dom": "^19.1.6",
     "@vitejs/plugin-react": "^4.6.0",
     "autoprefixer": "^10.4.21",
+    "cross-env": "^10.0.0",
     "eslint": "^9.30.1",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",

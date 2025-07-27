@@ -1,53 +1,71 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
-import { VitePWA } from 'vite-plugin-pwa';
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import { VitePWA } from "vite-plugin-pwa";
 
-const createPwaConfig = (name, shortName, startUrl, icons) => ({
-  registerType: 'autoUpdate',
-  includeAssets: ['favicon.ico'],
-  manifest: {
-    name,
-    short_name: shortName,
-    start_url: startUrl,
-    display: 'standalone',
-    background_color: '#ffffff',
-    theme_color: '#0f4c81',
-    orientation: 'portrait',
-    icons,
+const views = {
+  socios: {
+    html: "index.html",
+    start_url: "/",
+    name: "Calendario Rotary Socios",
+    short_name: "Socios",
   },
-});
+  junta: {
+    html: "calendario-junta.html",
+    start_url: "/calendario-junta.html",
+    name: "Calendario Junta",
+    short_name: "Junta",
+  },
+  tesoreria: {
+    html: "calendario-tesoreria.html",
+    start_url: "/calendario-tesoreria.html",
+    name: "Calendario Tesorería",
+    short_name: "Tesorería",
+  },
+  "estado-cuenta": {
+    html: "estado-cuenta.html",
+    start_url: "/estado-cuenta.html",
+    name: "Estado de Cuenta",
+    short_name: "Cuenta",
+  },
+};
+
+// Detectar la vista actual desde variable de entorno
+const vista = process.env.VISTA_ACTUAL || "socios";
+const configVista = views[vista];
 
 export default defineConfig({
   plugins: [
     react(),
-    VitePWA(
-      createPwaConfig(
-        'Calendario Rotary Socios',
-        'Calendario Socios',
-        '/', // 👈 ahora inicia en /
-        [
+    VitePWA({
+      registerType: "autoUpdate",
+      includeAssets: ["favicon.ico"],
+      manifest: {
+        name: configVista.name,
+        short_name: configVista.short_name,
+        start_url: configVista.start_url,
+        display: "standalone",
+        background_color: "#ffffff",
+        theme_color: "#0f4c81",
+        icons: [
           {
-            src: '/icons/icon-192.png',
-            sizes: '192x192',
-            type: 'image/png',
+            src: "/icons/icon-192.png",
+            sizes: "192x192",
+            type: "image/png",
           },
           {
-            src: '/icons/icon-512.png',
-            sizes: '512x512',
-            type: 'image/png',
+            src: "/icons/icon-512.png",
+            sizes: "512x512",
+            type: "image/png",
           },
-        ]
-      )
-    ),
+        ],
+      },
+    }),
   ],
   build: {
+    outDir: `dist/${vista}`,
     rollupOptions: {
       input: {
-        main: 'index.html', // 👈 el de socios renombrado
-        'calendario-junta': 'calendario-junta.html',
-        'calendario-tesoreria': 'calendario-tesoreria.html',
-        'estado-cuenta': 'estado-cuenta.html',
-
+        main: configVista.html,
       },
     },
   },

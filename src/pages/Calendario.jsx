@@ -206,12 +206,19 @@ useEffect(() => {
               {dia ? format(dia, "eee dd", { locale: es }) : ""}
             </div>
             {dia && isToday(dia) && (
-            <div className="absolute top-1 right-1 text-blue-600 text-[0.9rem]">
-              ⭐
-            </div>
-)}
-
-
+            <div className="absolute top-1 right-1">
+              <span
+                className={`absolute inline-flex h-3 w-3 rounded-full opacity-75 animate-ping ${
+                  [0, 6].includes(dia.getDay()) ? "bg-blue-300" : "bg-blue-600"
+                }`}
+              ></span>
+              <span
+                className={`relative inline-flex h-3 w-3 rounded-full shadow ${
+                  [0, 6].includes(dia.getDay()) ? "bg-blue-300" : "bg-blue-600"
+                }`}
+               ></span>
+             </div>
+            )}
 
             {dia && eventos
               .filter((e) => {

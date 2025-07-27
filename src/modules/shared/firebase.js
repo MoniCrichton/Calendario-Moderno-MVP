@@ -13,5 +13,6 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app); // ✅ ESTA LÍNEA FALTABA
 
-export { db };
+export { db, auth }; // ✅ AGREGÁS auth ACÁ

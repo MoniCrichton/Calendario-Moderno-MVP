@@ -10,6 +10,7 @@ export default function App({ nivel }) {
   return (
     <BrowserRouter>
       <Routes>
+       <Route path="/login" element={<Login />} />
        <Route path="/" element={<Home nivel={nivel} />} />
 
 

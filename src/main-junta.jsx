@@ -8,6 +8,6 @@ registerSW();
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <App nivel="junta" />
+   <App nivel={import.meta.env.VITE_NIVEL} />
   </React.StrictMode>
 );

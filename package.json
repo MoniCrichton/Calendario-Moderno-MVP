@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "build:socios": "cross-env VISTA_ACTUAL=socios vite build",
-    "build:junta": "cross-env VISTA_ACTUAL=junta vite build",
+    "build:junta": "cross-env VITE_NIVEL=junta VISTA_ACTUAL=junta vite build",
     "build:tesoreria": "cross-env VISTA_ACTUAL=tesoreria vite build",
     "build:estado": "cross-env VISTA_ACTUAL=estado-cuenta vite build"
   },

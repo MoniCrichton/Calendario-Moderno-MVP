@@ -5,6 +5,6 @@ import EstadoCuentaSocio from './components/EstadoCuenta/EstadoCuentaSocio';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <EstadoCuentaSocio />
+  <App nivel="tesoreria" />
   </React.StrictMode>
 );

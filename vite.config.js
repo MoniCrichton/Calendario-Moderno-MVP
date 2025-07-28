@@ -69,4 +69,7 @@ export default defineConfig({
       },
     },
   },
+   define: {
+    'import.meta.env.VITE_NIVEL': JSON.stringify(vista),
+  },
 });

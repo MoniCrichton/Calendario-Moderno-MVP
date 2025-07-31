@@ -2,6 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
 
+// Configuraciones por vista
 const views = {
   socios: {
     html: "index.html",
@@ -10,8 +11,8 @@ const views = {
     short_name: "Socios",
   },
   junta: {
-    html: "calendario-junta.html",
-    start_url: "/calendario-junta.html",
+    html: "calendario-junta.html", // el archivo fuente
+    start_url: "/",
     name: "Calendario Junta",
     short_name: "Junta",
   },
@@ -47,16 +48,8 @@ export default defineConfig({
         background_color: "#ffffff",
         theme_color: "#0f4c81",
         icons: [
-          {
-            src: "/icons/icon-192.png",
-            sizes: "192x192",
-            type: "image/png",
-          },
-          {
-            src: "/icons/icon-512.png",
-            sizes: "512x512",
-            type: "image/png",
-          },
+          { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+          { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
         ],
       },
     }),
@@ -65,11 +58,11 @@ export default defineConfig({
     outDir: `dist/${vista}`,
     rollupOptions: {
       input: {
-        main: configVista.html,
+        index: configVista.html, // 🔁 siempre genera dist/vista/index.html
       },
     },
   },
-   define: {
-    'import.meta.env.VITE_NIVEL': JSON.stringify(vista),
+  define: {
+    "import.meta.env.VITE_NIVEL": JSON.stringify(vista),
   },
 });

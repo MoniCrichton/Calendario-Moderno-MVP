@@ -10,8 +10,8 @@ const views = {
     short_name: "Socios",
   },
   junta: {
-    html: "index.html",
-    start_url: "/",
+    html: "calendario-junta.html",
+    start_url: "/calendario-junta.html",
     name: "Calendario Junta",
     short_name: "Junta",
   },

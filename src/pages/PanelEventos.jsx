@@ -48,8 +48,11 @@ export default function PanelEventos() {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         setUsuario(user);
-        const token = await user.getIdTokenResult();
-        const nivel = token?.claims?.nivel || [];
+        const docRef = doc(db, "usuarios", user.uid);
+        const snap = await getDoc(docRef);
+        const datos = snap.exists() ? snap.data() : {};
+        const nivel = datos?.nivel || [];
+
         if (Array.isArray(nivel) && nivel.includes("junta")) {
           setNivelPermitido(true);
           cargarEventos();

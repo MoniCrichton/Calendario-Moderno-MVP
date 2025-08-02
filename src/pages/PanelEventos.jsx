@@ -14,6 +14,9 @@ import {
 } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
+
+const auth = getAuth();
 
 export default function PanelEventos() {
   const [evento, setEvento] = useState({
@@ -30,6 +33,8 @@ export default function PanelEventos() {
     hasta: ""
   });
 
+  const [usuario, setUsuario] = useState(null);
+  const [nivelPermitido, setNivelPermitido] = useState(false);
   const [sinHora, setSinHora] = useState(false);
   const [eventos, setEventos] = useState([]);
   const [tiposEventos, setTiposEventos] = useState([]);
@@ -37,56 +42,71 @@ export default function PanelEventos() {
   const [busqueda, setBusqueda] = useState("");
   const [mostrarResultados, setMostrarResultados] = useState(false);
   const resultadosRef = useRef(null);
-
   const navigate = useNavigate();
 
   useEffect(() => {
-    cargarEventos();
-    cargarTipos();
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        setUsuario(user);
+        const token = await user.getIdTokenResult();
+        const nivel = token?.claims?.nivel || [];
+        if (Array.isArray(nivel) && nivel.includes("junta")) {
+          setNivelPermitido(true);
+          cargarEventos();
+          cargarTipos();
+        } else {
+          setNivelPermitido(false);
+        }
+      } else {
+        setUsuario(null);
+        setNivelPermitido(false);
+      }
+    });
+    return () => unsubscribe();
   }, []);
 
   useEffect(() => {
-    if (busqueda.trim() !== "") {
-      filtrarPorBusqueda();
-    }
+    if (busqueda.trim() !== "") filtrarPorBusqueda();
   }, [busqueda]);
+
+  const handleLogin = () => {
+    const email = prompt("Email:");
+    const password = prompt("Contraseña:");
+    signInWithEmailAndPassword(auth, email, password)
+      .then(() => alert("Sesión iniciada"))
+      .catch((error) => alert("Error: " + error.message));
+  };
+
+  const handleLogout = () => {
+    signOut(auth)
+      .then(() => alert("Sesión cerrada"))
+      .catch((error) => alert("Error: " + error.message));
+  };
 
   const cargarEventos = async () => {
     const q = query(collection(db, "eventos"));
     const querySnapshot = await getDocs(q);
     const lista = [];
     querySnapshot.forEach((docSnap) => {
-          const data = docSnap.data();
-
-          let fechaObj;
-          if (data.fecha && typeof data.fecha === "object" && data.fecha.toDate) {
-            fechaObj = data.fecha.toDate();
-          } else if (typeof data.fecha === "string") {
-            const [anio, mes, dia] = data.fecha.split("-").map(Number);
-            if (anio && mes && dia) {
-              fechaObj = new Date(anio, mes - 1, dia, 12); // default a mediodía
-            } else {
-              console.warn("Fecha inválida:", data.fecha);
-              return; // skip evento inválido
-            }
-          } else {
-            console.warn("Evento sin fecha:", docSnap.id);
-            return; // skip evento inválido
-          }
-
-          lista.push({
-            id: docSnap.id,
-            ...data,
-            fecha: fechaObj.toISOString().split("T")[0], // 🟢 garantizado válido
-          });
+      const data = docSnap.data();
+      let fechaObj;
+      if (data.fecha && typeof data.fecha === "object" && data.fecha.toDate) {
+        fechaObj = data.fecha.toDate();
+      } else if (typeof data.fecha === "string") {
+        const [anio, mes, dia] = data.fecha.split("-").map(Number);
+        if (anio && mes && dia) {
+          fechaObj = new Date(anio, mes - 1, dia, 12);
+        } else {
+          console.warn("Fecha inválida:", data.fecha);
+          return;
+        }
+      } else {
+        console.warn("Evento sin fecha:", docSnap.id);
+        return;
+      }
+      lista.push({ id: docSnap.id, ...data, fecha: fechaObj.toISOString().split("T")[0] });
     });
-
-    lista.sort((a, b) => {
-      const fechaA = new Date(`${a.fecha}T${a.horaInicio || "00:00"}`);
-      const fechaB = new Date(`${b.fecha}T${b.horaInicio || "00:00"}`);
-      return fechaA - fechaB;
-    });
-
+    lista.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
     setEventos(lista);
     setEventosFiltrados([]);
     setMostrarResultados(false);
@@ -107,113 +127,89 @@ export default function PanelEventos() {
   };
 
   const handleCheckbox = (e) => {
-  setEvento({ ...evento, [e.target.name]: e.target.checked });
-};
+    setEvento({ ...evento, [e.target.name]: e.target.checked });
+  };
 
-
-const handleSubmit = async (e) => {
-  e.preventDefault();
-
-  try {
-    if (!evento.fecha) {
-      alert("Por favor seleccioná una fecha válida.");
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!usuario) {
+      alert("Debés iniciar sesión para cargar o editar eventos.");
       return;
     }
-
-    // Parsear fecha de inicio
-    let fechaInicio = new Date(evento.fecha + "T12:00:00");
-    fechaInicio.setHours(12, 0, 0, 0);
-
-    // Si no repite: solo uno
-    if (!evento.repetir) {
-      const eventoFinal = {
-        ...evento,
-        horaInicio: sinHora ? "" : evento.horaInicio,
-        horaFin: sinHora ? "" : evento.horaFin,
-        creadoEn: Timestamp.now(),
-        fecha: Timestamp.fromDate(fechaInicio),
-      };
-
-      if (evento.id) {
-        const docRef = doc(db, "eventos", evento.id);
-        await updateDoc(docRef, eventoFinal);
-        alert("Evento modificado correctamente");
-      } else {
-        await addDoc(collection(db, "eventos"), eventoFinal);
-        alert("Evento agregado correctamente");
+    try {
+      if (!evento.fecha) {
+        alert("Por favor seleccioná una fecha válida.");
+        return;
       }
-
-    } else {
-      // Parsear fecha final
-      let fechaFin = new Date(evento.hasta);
-      fechaFin.setHours(12, 0, 0, 0);
-
-      let fechas = [];
-      let actual = new Date(evento.fecha + "T12:00:00");
-      fechaFin.setHours(12, 0, 0, 0);
-
-
-      while (actual <= fechaFin) {
-        fechas.push(new Date(actual)); // Clonar
-
-        switch (evento.frecuencia) {
-          case "diaria":
-            actual.setDate(actual.getDate() + 1);
-            break;
-          case "semanal":
-            actual.setDate(actual.getDate() + 7);
-            break;
-          case "mensual":
-            actual.setMonth(actual.getMonth() + 1);
-            break;
-          case "anual":
-            actual.setFullYear(actual.getFullYear() + 1);
-            break;
-          default:
-            alert("Frecuencia inválida.");
-            return;
-        }
-      }
-
-      const batch = fechas.map(async (fecha) => {
-        fecha.setHours(12, 0, 0, 0);
-        const nuevoEvento = {
+      let fechaInicio = new Date(evento.fecha + "T12:00:00");
+      fechaInicio.setHours(12, 0, 0, 0);
+      if (!evento.repetir) {
+        const eventoFinal = {
           ...evento,
           horaInicio: sinHora ? "" : evento.horaInicio,
           horaFin: sinHora ? "" : evento.horaFin,
           creadoEn: Timestamp.now(),
-          fecha: Timestamp.fromDate(fecha),
+          fecha: Timestamp.fromDate(fechaInicio)
         };
-        delete nuevoEvento.id; // importante
-        return await addDoc(collection(db, "eventos"), nuevoEvento);
+        if (evento.id) {
+          const docRef = doc(db, "eventos", evento.id);
+          await updateDoc(docRef, eventoFinal);
+          alert("Evento modificado correctamente");
+        } else {
+          await addDoc(collection(db, "eventos"), eventoFinal);
+          alert("Evento agregado correctamente");
+        }
+      } else {
+        let fechaFin = new Date(evento.hasta);
+        fechaFin.setHours(12, 0, 0, 0);
+        let actual = new Date(evento.fecha + "T12:00:00");
+        let fechas = [];
+        while (actual <= fechaFin) {
+          fechas.push(new Date(actual));
+          switch (evento.frecuencia) {
+            case "diaria": actual.setDate(actual.getDate() + 1); break;
+            case "semanal": actual.setDate(actual.getDate() + 7); break;
+            case "mensual": actual.setMonth(actual.getMonth() + 1); break;
+            case "anual": actual.setFullYear(actual.getFullYear() + 1); break;
+            default:
+              alert("Frecuencia inválida.");
+              return;
+          }
+        }
+        const batch = fechas.map(async (fecha) => {
+          fecha.setHours(12, 0, 0, 0);
+          const nuevoEvento = {
+            ...evento,
+            horaInicio: sinHora ? "" : evento.horaInicio,
+            horaFin: sinHora ? "" : evento.horaFin,
+            creadoEn: Timestamp.now(),
+            fecha: Timestamp.fromDate(fecha)
+          };
+          delete nuevoEvento.id;
+          return await addDoc(collection(db, "eventos"), nuevoEvento);
+        });
+        await Promise.all(batch);
+        alert(`Se agregaron ${fechas.length} eventos repetidos.`);
+      }
+      setEvento({
+        id: null,
+        titulo: "",
+        tipo: "",
+        detalles: "",
+        fecha: "",
+        horaInicio: "",
+        horaFin: "",
+        mostrar: "publico",
+        repetir: false,
+        frecuencia: "",
+        hasta: ""
       });
-
-      await Promise.all(batch);
-      alert(`Se agregaron ${fechas.length} eventos repetidos.`);
+      setSinHora(false);
+      cargarEventos();
+    } catch (error) {
+      alert("Error al guardar evento: " + error.message);
     }
-
-    // Reset
-    setEvento({
-      titulo: "",
-      tipo: "",
-      detalles: "",
-      fecha: "",
-      horaInicio: "",
-      horaFin: "",
-      mostrar: "publico",
-      repetir: false,
-      frecuencia: "",
-      hasta: ""
-    });
-    setSinHora(false);
-    cargarEventos();
-
-  } catch (error) {
-    alert("Error al guardar evento: " + error.message);
-  }
-};
-
-
+  };
 
   const editarEvento = (evento) => {
     setEvento(evento);
@@ -222,15 +218,10 @@ const handleSubmit = async (e) => {
   };
 
   const eliminarEvento = async (id) => {
-    if (!id) {
-      alert("ID inválido para eliminar el evento.");
-      return;
-    }
-
+    if (!id) return alert("ID inválido para eliminar el evento.");
+    const confirmar = confirm("¿Estás seguro de que querés eliminar este evento?");
+    if (!confirmar) return;
     try {
-      const confirmar = confirm("¿Estás seguro de que querés eliminar este evento?");
-      if (!confirmar) return;
-
       await deleteDoc(doc(db, "eventos", id));
       cargarEventos();
     } catch (error) {
@@ -239,22 +230,17 @@ const handleSubmit = async (e) => {
   };
 
   const reemplazarTipo = async (tipoActual, tipoNuevo) => {
-    const confirmacion = confirm(
-      `¿Querés reemplazar todos los eventos del tipo "${tipoActual}" por "${tipoNuevo}"?`
-    );
+    const confirmacion = confirm(`¿Querés reemplazar todos los eventos del tipo "${tipoActual}" por "${tipoNuevo}"?`);
     if (!confirmacion) return;
-
     const q = query(collection(db, "eventos"));
     const querySnapshot = await getDocs(q);
     const batch = writeBatch(db);
-
     querySnapshot.forEach((docSnap) => {
       const data = docSnap.data();
       if (data.tipo === tipoActual) {
         batch.update(doc(db, "eventos", docSnap.id), { tipo: tipoNuevo });
       }
     });
-
     await batch.commit();
     alert(`Se reemplazó "${tipoActual}" por "${tipoNuevo}" en todos los eventos.`);
     cargarEventos();
@@ -266,7 +252,7 @@ const handleSubmit = async (e) => {
   };
 
   const tiposUsados = Array.from(
-    new Set(eventos.map((e) => (e.tipo || "").toLowerCase().trim()).filter((t) => t))
+    new Set(eventos.map((e) => (e.tipo || "").toLowerCase().trim()).filter(Boolean))
   ).sort();
 
   const filtrarEventos = ({ tipo, mostrar, sinTipo }) => {
@@ -282,24 +268,43 @@ const handleSubmit = async (e) => {
 
   const filtrarPorBusqueda = () => {
     const texto = busqueda.toLowerCase();
-    const resultado = eventos.filter((e) => {
-      return (
-        e.titulo.toLowerCase().includes(texto) ||
-        (e.detalles && e.detalles.toLowerCase().includes(texto)) ||
-        (e.tipo && e.tipo.toLowerCase().includes(texto))
-      );
-    });
+    const resultado = eventos.filter((e) =>
+      e.titulo.toLowerCase().includes(texto) ||
+      (e.detalles && e.detalles.toLowerCase().includes(texto)) ||
+      (e.tipo && e.tipo.toLowerCase().includes(texto))
+    );
     setEventosFiltrados(resultado);
     setMostrarResultados(true);
     setTimeout(() => resultadosRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
   };
 
+  if (!usuario) {
+    return (
+      <div className="max-w-xl mx-auto py-10 text-center">
+        <p className="mb-4">Debés iniciar sesión para acceder al panel.</p>
+        <button onClick={handleLogin} className="bg-blue-600 text-white px-4 py-2 rounded">Iniciar sesión</button>
+      </div>
+    );
+  }
+
+  if (!nivelPermitido) {
+    return (
+      <div className="max-w-xl mx-auto py-10 text-center">
+        <p className="text-red-600 font-semibold">Tu usuario no tiene permisos para acceder a este panel.</p>
+        <button onClick={handleLogout} className="mt-4 bg-red-600 text-white px-4 py-2 rounded">Cerrar sesión</button>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-3xl mx-auto px-4 py-6">
-      <h1 className="text-2xl font-bold mb-6 text-center">
-        {evento.id ? "Editar Evento" : "Cargar Evento"}
-      </h1>
-
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold text-center flex-1">
+          {evento.id ? "Editar Evento" : "Cargar Evento"}
+        </h1>
+        <button onClick={handleLogout} className="bg-red-500 text-white px-3 py-1 rounded">Cerrar sesión</button>
+      </div>
+      
       <form onSubmit={handleSubmit} className="grid gap-3 mb-6">
         <input type="text" name="titulo" placeholder="Título" value={evento.titulo} onChange={handleChange} className="border p-2 rounded" required />
         <select name="tipo" value={evento.tipo} onChange={handleChange} className="border p-2 rounded" required>

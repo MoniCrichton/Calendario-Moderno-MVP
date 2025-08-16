@@ -70,14 +70,43 @@ export default function Calendario({ nivel = "publico" }) {
       try {
         const response = await fetch("/data/event_type_styles.json");
         const json = await response.json();
-        setEstilosPorTipo(json);
+        const estilosMap = {};
+        json.forEach((item) => {
+          estilosMap[item.tipo.toLowerCase()] = item;
+        });
+        if (!estilosMap["default"]) {
+          estilosMap["default"] = {
+            emoji: "🗓️",
+            color: "bg-gray-100",
+          };
+        }
+        setEstilosPorTipo(estilosMap);
       } catch (error) {
-        console.error("No se pudieron cargar estilos por tipo:", error);
-        setEstilosPorTipo({});
+        console.error("Error cargando estilos por tipo:", error);
       }
     }
+
     cargarEstilos();
   }, []);
+
+// ⬇⬇⬇ NUEVO useEffect para hacer scroll solo en celular después de cargar eventos
+useEffect(() => {
+  if (!eventos.length) return;
+
+  if (window.innerWidth < 768) {
+    const hoy = new Date();
+    const id = `dia-${hoy.getFullYear()}-${hoy.getMonth() + 1}-${hoy.getDate()}`;
+    const el = document.getElementById(id);
+    if (el) {
+      setTimeout(() => {
+        el.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }, 400); // podés subir este delay si hiciera falta
+    }
+  }
+}, [eventos]);
 
   useEffect(() => {
     const inicio = startOfMonth(currentDate);
@@ -87,8 +116,8 @@ export default function Calendario({ nivel = "publico" }) {
     if (esCelular) {
       setDiasDelMes(dias);
     } else {
-      const dayIndex = getDay(inicio); // 0=domingo
-      const diasAntes = (dayIndex + 6) % 7; // padding para empezar en domingo
+      const dayIndex = getDay(inicio);
+      const diasAntes = (dayIndex + 6) % 7;
       const padding = Array.from({ length: diasAntes }, () => null);
       const diasConPadding = [...padding, ...dias];
       const totalCeldas = diasConPadding.length;
@@ -96,8 +125,8 @@ export default function Calendario({ nivel = "publico" }) {
       const paddingFinal = Array.from({ length: faltantes }, () => null);
       setDiasDelMes([...diasConPadding, ...paddingFinal]);
     }
-  }, [currentDate, esCelular]);
-
+  }, [currentDate]);
+    
   useEffect(() => {
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.addEventListener("controllerchange", () => {
@@ -114,6 +143,8 @@ export default function Calendario({ nivel = "publico" }) {
     const nivelNormalizado = nivel?.toLowerCase()?.trim();
     const mostrar = mostrarRaw?.toLowerCase()?.trim();
 
+    console.log(`🕵️ Verificando visibilidad - Nivel: ${nivelNormalizado} | Mostrar: ${mostrar}`)
+    
     if (nivelNormalizado === "junta") {
       return mostrar === "junta" || mostrar === "socios" || mostrar === "publico";
     }
@@ -138,41 +169,36 @@ export default function Calendario({ nivel = "publico" }) {
 
       <button
         onClick={() => cambiarMes(-1)}
-        className="fixed left-2 top-1/2 transform -translate-y-1/2 bg-white text-blue-600 p-2 rounded-full shadow-lg hover:bg-blue-50"
-        aria-label="Mes anterior"
+        className="fixed left-2 top-1/2 -translate-y-1/2 bg-gray-200 px-2 py-1 rounded shadow"
       >
         ←
       </button>
-
       <button
         onClick={() => cambiarMes(1)}
-        className="fixed right-2 top-1/2 transform -translate-y-1/2 bg-white text-blue-600 p-2 rounded-full shadow-lg hover:bg-blue-50"
-        aria-label="Mes siguiente"
+        className="fixed right-2 top-1/2 -translate-y-1/2 bg-gray-200 px-2 py-1 rounded shadow"
       >
         →
       </button>
 
-      <div className="text-center mb-4">
-        <h2 className="text-2xl font-bold">
+      <div className="sticky top-0 bg-white z-10 pb-2">
+        <h2 className="text-2xl font-bold mb-1 text-center">
           {format(currentDate, "MMMM yyyy", { locale: es })}
         </h2>
-        <p className="text-sm text-gray-500">{leyendaRI(currentDate)}</p>
+        <div className="text-sm text-center italic text-gray-600">
+          {leyendaRI[currentDate.getMonth()] || ""}
+        </div>
       </div>
 
-      {/* Encabezados de semana solo en escritorio */}
-      {!esCelular && (
-        <div className="grid grid-cols-7 gap-2 mb-2 text-center text-sm font-semibold text-gray-600">
-          {["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"].map((d) => (
-            <div key={d}>{d}</div>
-          ))}
-        </div>
-      )}
-
-      <div className={`grid gap-2 ${esCelular ? "grid-cols-2" : "grid-cols-7"}`}>
-        {diasDelMes.map((dia, idx) => (
+      <div className="grid gap-2 grid-cols-2 md:grid-cols-7">
+        {diasDelMes.map((dia, index) => (
           <div
-            key={idx}
-            className={`relative min-h-[90px] p-2 rounded-lg border ${
+            key={index}
+            id={
+              dia
+                ? `dia-${dia.getFullYear()}-${dia.getMonth() + 1}-${dia.getDate()}`
+                : `vacio-${index}`
+            }
+            className={`relative min-h-[6rem] border p-2 rounded shadow-sm text-center transition-all duration-300 ${
               dia && isToday(dia) ? "ring-2 ring-blue-500 bg-blue-50 animate-pulse" : "bg-white"
             }`}
           >
@@ -180,29 +206,28 @@ export default function Calendario({ nivel = "publico" }) {
               {dia ? format(dia, "eee dd", { locale: es }) : ""}
             </div>
             {dia && isToday(dia) && (
-              <div className="absolute top-1 right-1">
-                <span
-                  className={`absolute inline-flex h-3 w-3 rounded-full opacity-75 animate-ping ${
-                    [0, 6].includes(dia.getDay()) ? "bg-blue-300" : "bg-blue-600"
-                  }`}
-                ></span>
-                <span
-                  className={`relative inline-flex h-3 w-3 rounded-full shadow ${
-                    [0, 6].includes(dia.getDay()) ? "bg-blue-300" : "bg-blue-600"
-                  }`}
-                ></span>
-              </div>
+            <div className="absolute top-1 right-1">
+              <span
+                className={`absolute inline-flex h-3 w-3 rounded-full opacity-75 animate-ping ${
+                  [0, 6].includes(dia.getDay()) ? "bg-blue-300" : "bg-blue-600"
+                }`}
+              ></span>
+              <span
+                className={`relative inline-flex h-3 w-3 rounded-full shadow ${
+                  [0, 6].includes(dia.getDay()) ? "bg-blue-300" : "bg-blue-600"
+                }`}
+               ></span>
+             </div>
             )}
 
             {dia && eventos
               .filter((e) => {
-                if (!e?.fechaObj || !dia) return false;
-                const fe = e.fechaObj; // Date ya normalizada al mediodía
-                return (
-                  fe.getFullYear() === currentDate.getFullYear() && // mismo AÑO visible
-                  fe.getMonth() === currentDate.getMonth() &&       // mismo MES visible
-                  fe.getDate() === dia.getDate()                    // mismo DÍA del mes
-                );
+                if (!e.fechaObj || !dia) return false;
+                const fechaEvento = new Date(e.fechaObj);
+                fechaEvento.setHours(0, 0, 0, 0);
+                const diaComparado = new Date(dia);
+                diaComparado.setHours(0, 0, 0, 0);
+                return fechaEvento.getTime() === diaComparado.getTime();
               })
               .filter((e) => puedeVerEvento(e.mostrar))
               .sort((a, b) => {
@@ -213,13 +238,10 @@ export default function Calendario({ nivel = "publico" }) {
               .map((evento) => {
                 const tipo = evento.tipo?.toLowerCase() || "default";
                 const estilo = estilosPorTipo[tipo] || estilosPorTipo["default"];
-                console.log(
-                  "Nivel:", nivel,
-                  "| Mostrar:", evento.mostrar,
-                  "| Pasa filtro?", puedeVerEvento(evento.mostrar)
-                );
+                console.log("Nivel:", nivel, "| Mostrar:", evento.mostrar, "| Pasa filtro?", puedeVerEvento(evento.mostrar));
 
                 return (
+            
                   <div key={evento.id}>
                     {nivel === "junta" && evento.mostrar === "junta" && (
                       <div className="text-[0.65rem] font-bold text-red-500 uppercase mb-1">
@@ -250,13 +272,13 @@ export default function Calendario({ nivel = "publico" }) {
         <div
           style={{
             position: "fixed",
-            left: "50%",
-            bottom: "20px",
-            transform: "translateX(-50%)",
-            background: "#fff",
-            color: "#333",
-            padding: "10px 14px",
+            bottom: 60,
+            right: 10,
+            backgroundColor: "#0f4c81",
+            color: "white",
+            padding: "6px 12px",
             borderRadius: "8px",
+            fontSize: "0.75rem",
             boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
             zIndex: 1001,
             cursor: "pointer",

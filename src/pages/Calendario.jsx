@@ -1,15 +1,18 @@
 import { useEffect, useState, useMemo } from "react";
-import {
-  addMonths,
-  format,
-  startOfMonth,
-  endOfMonth,
-  eachDayOfInterval,
-  isToday,
-  getDay,
-  isSameMonth,
-  isSameDay,
-} from "date-fns";
+
+
+// ✅ usá imports por función (rutas individuales)
+import addMonths from "date-fns/addMonths";
+import format from "date-fns/format";
+import startOfMonth from "date-fns/startOfMonth";
+import endOfMonth from "date-fns/endOfMonth";
+import eachDayOfInterval from "date-fns/eachDayOfInterval";
+import isToday from "date-fns/isToday";
+import getDay from "date-fns/getDay";
+import isSameMonth from "date-fns/isSameMonth";
+import isSameDay from "date-fns/isSameDay";
+
+// el locale sigue igual
 import { es } from "date-fns/locale";
 import { collection, getDocs, query, orderBy } from "firebase/firestore";
 import { db } from "../modules/shared/firebase";

@@ -1,18 +1,14 @@
-import { useEffect, useState, useMemo } from "react";
-
-
-// ✅ usá imports por función (rutas individuales)
-import addMonths from "date-fns/addMonths";
-import format from "date-fns/format";
-import startOfMonth from "date-fns/startOfMonth";
-import endOfMonth from "date-fns/endOfMonth";
-import eachDayOfInterval from "date-fns/eachDayOfInterval";
-import isToday from "date-fns/isToday";
-import getDay from "date-fns/getDay";
-import isSameMonth from "date-fns/isSameMonth";
-import isSameDay from "date-fns/isSameDay";
-
-// el locale sigue igual
+import { useEffect, useState } from "react";
+import {
+  addMonths,
+  format,
+  startOfMonth,
+  endOfMonth,
+  eachDayOfInterval,
+  isToday,
+  getDate,
+  getDay,
+} from "date-fns";
 import { es } from "date-fns/locale";
 import { collection, getDocs, query, orderBy } from "firebase/firestore";
 import { db } from "../modules/shared/firebase";
@@ -29,13 +25,6 @@ export default function Calendario({ nivel = "publico" }) {
   const [actualizado, setActualizado] = useState(false);
   const [esCelular, setEsCelular] = useState(window.innerWidth < 640);
   const navigate = useNavigate();
-
-  // 🧠 Memo: eventos del mes visible (evita recalcular por celda y corta “colados” de otros meses)
-  const eventosDelMes = useMemo(() => {
-    return (eventos || []).filter(
-      (e) => e?.fechaObj && isSameMonth(e.fechaObj, currentDate)
-    );
-  }, [eventos, currentDate]);
 
   useEffect(() => {
     const actualizarTamaño = () => setEsCelular(window.innerWidth < 640);
@@ -56,7 +45,6 @@ export default function Calendario({ nivel = "publico" }) {
 
           if (e.fecha && typeof e.fecha.toDate === "function") {
             fecha = e.fecha.toDate();
-            // Anclamos al mediodía local para evitar saltos por huso
             fecha.setHours(12, 0, 0, 0);
           } else if (typeof e.fecha === "string") {
             const [anio, mes, dia] = e.fecha.split("-").map(Number);
@@ -129,9 +117,11 @@ export default function Calendario({ nivel = "publico" }) {
     if (nivelNormalizado === "junta") {
       return mostrar === "junta" || mostrar === "socios" || mostrar === "publico";
     }
+
     if (nivelNormalizado === "socios") {
       return mostrar === "socios" || mostrar === "publico";
     }
+
     return mostrar === "publico";
   };
 
@@ -178,11 +168,7 @@ export default function Calendario({ nivel = "publico" }) {
         </div>
       )}
 
-      <div
-        className={`grid gap-2 ${
-          esCelular ? "grid-cols-2" : "grid-cols-7"
-        }`}
-      >
+      <div className={`grid gap-2 ${esCelular ? "grid-cols-2" : "grid-cols-7"}`}>
         {diasDelMes.map((dia, idx) => (
           <div
             key={idx}
@@ -208,8 +194,16 @@ export default function Calendario({ nivel = "publico" }) {
               </div>
             )}
 
-            {dia && eventosDelMes
-              .filter((e) => isSameDay(e.fechaObj, dia))
+            {dia && eventos
+              .filter((e) => {
+                if (!e?.fechaObj || !dia) return false;
+                const fe = e.fechaObj; // Date ya normalizada al mediodía
+                return (
+                  fe.getFullYear() === currentDate.getFullYear() && // mismo AÑO visible
+                  fe.getMonth() === currentDate.getMonth() &&       // mismo MES visible
+                  fe.getDate() === dia.getDate()                    // mismo DÍA del mes
+                );
+              })
               .filter((e) => puedeVerEvento(e.mostrar))
               .sort((a, b) => {
                 const ha = a.horaInicio || "00:00";

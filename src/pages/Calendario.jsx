@@ -220,22 +220,19 @@ useEffect(() => {
              </div>
             )}
 
-            {dia && eventos
-              .filter((e) => {
-                if (!e.fechaObj || !dia) return false;
-                const fechaEvento = new Date(e.fechaObj);
-                fechaEvento.setHours(0, 0, 0, 0);
-                const diaComparado = new Date(dia);
-                diaComparado.setHours(0, 0, 0, 0);
-                return fechaEvento.getTime() === diaComparado.getTime();
-              })
-              .filter((e) => puedeVerEvento(e.mostrar))
-              .sort((a, b) => {
-                const ha = a.horaInicio || "00:00";
-                const hb = b.horaInicio || "00:00";
-                return ha.localeCompare(hb);
-              })
-              .map((evento) => {
+          {dia && eventos
+            .filter((e) => {
+              if (!e?.fechaObj || !dia) return false;
+              const fe = e.fechaObj; // Date ya normalizada al mediodía
+              return (
+                fe.getFullYear() === currentDate.getFullYear() && // mismo año visible
+                fe.getMonth() === currentDate.getMonth() &&       // mismo mes visible
+                fe.getDate() === dia.getDate()                    // mismo día del mes
+              );
+            })
+            .filter((e) => puedeVerEvento(e.mostrar))
+            .sort((a, b) => (a.horaInicio || "00:00").localeCompare(b.horaInicio || "00:00"))
+            .map((evento) => {
                 const tipo = evento.tipo?.toLowerCase() || "default";
                 const estilo = estilosPorTipo[tipo] || estilosPorTipo["default"];
                 console.log("Nivel:", nivel, "| Mostrar:", evento.mostrar, "| Pasa filtro?", puedeVerEvento(evento.mostrar));

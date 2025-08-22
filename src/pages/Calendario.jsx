@@ -161,7 +161,7 @@ useEffect(() => {
       {nivel === "junta" && (
         <button
           onClick={() => navigate("/admin")}
-          className="fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-full shadow-md hover:bg-blue-700"
+          className="fixed bottom-4 right-4 z-[2000] bg-blue-600 text-white px-4 py-2 rounded-full shadow-md hover:bg-blue-700"
         >
           + Evento
         </button>

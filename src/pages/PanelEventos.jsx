@@ -404,7 +404,7 @@ export default function PanelEventos() {
       )}
 
       <button
-        onClick={() => navigate("/calendario-junta")}
+        onClick={() => navigate("/")}
         className="fixed bottom-4 left-4 bg-green-600 text-white px-4 py-2 rounded-full shadow-md hover:bg-green-700"
       >
         ← Volver a Junta

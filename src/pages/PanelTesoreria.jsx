@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { db } from "../modules/shared/firebase";
+import BotonNuevoPago from "./pages/BotonNuevoPago.jsx";
 import {
   collection,
   addDoc,
@@ -213,6 +214,10 @@ lista.sort((a, b) => {
           {registro.id ? "Actualizar" : "Guardar"}
         </button>
       </form>
+
+      <div className="mt-6 mb-4">
+        <BotonNuevoPago />
+      </div>
 
       <h2 className="text-xl font-semibold mt-8 mb-4">Registros</h2>
       {registros.map((r) => (

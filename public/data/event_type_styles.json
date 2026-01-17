@@ -10,6 +10,11 @@
     "color": "#00FA9A"
   },
   {
+  "tipo": "aniversario_club",
+  "emoji": "🎉",
+  "color": "#FFD700"
+  },
+  {
     "tipo": "feriado",
     "emoji": "🇦🇷",
     "color": "#87CEEB"
@@ -103,5 +108,11 @@
     "tipo": "default",
     "emoji": "🗓️",
     "color": "#E0E0E0"
+  },
+  {
+  "tipo": "tesoreria",
+  "emoji": "💰",
+  "color": "#4B5563"
   }
+
 ]

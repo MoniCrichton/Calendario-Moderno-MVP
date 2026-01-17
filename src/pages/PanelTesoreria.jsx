@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { db } from "../modules/shared/firebase";
-import BotonNuevoPago from "./pages/BotonNuevoPago.jsx";
+import BotonNuevoPago from "./BotonNuevoPago.jsx";
 import {
   collection,
   addDoc,

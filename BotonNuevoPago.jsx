@@ -1,4 +1,4 @@
-// src/pages/BotonNuevoPago.jsx
+// src/BotonNuevoPago.jsx
 import { useState } from "react";
 import { crearPago, waLinkFirmaPago, linkFirmaPago } from "../modules/pagos/api";
 

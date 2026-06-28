@@ -1,5 +1,5 @@
 // src/modules/pagos/api.js
-import { db, storage } from "../shared/firebase"; // ya lo tenés en tu proyecto
+import { db } from "../shared/firebase"; // ya lo tenés en tu proyecto
 import {
   addDoc, collection, doc, getDoc, updateDoc, serverTimestamp,
 } from "firebase/firestore";

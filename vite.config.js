@@ -29,7 +29,7 @@ const views = {
     short_name: "Cuenta",
   },
   rotaract: {
-    html: "index.html",
+    html: "calendario-rotaract.html",
     start_url: "/",
     name: "Calendario Rotaract",
     short_name: "Rotaract",

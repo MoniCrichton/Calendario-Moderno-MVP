@@ -54,13 +54,16 @@ export default function PanelEventos() {
         const datos = snap.exists() ? snap.data() : {};
         const nivel = datos?.nivel || [];
 
-        if (Array.isArray(nivel) && nivel.includes("junta")) {
-          setNivelPermitido(true);
-          cargarEventos();
-          cargarTipos();
-        } else {
+        const nivelesPermitidos = ["junta", "rotaract", "interact"];
+
+      if (Array.isArray(nivel) && nivel.some(n => nivelesPermitidos.includes(n))) {
+        setNivelPermitido(true);
+        cargarEventos();
+        cargarTipos();
+      } else {
           setNivelPermitido(false);
-        }
+      }
+
       } else {
         setUsuario(null);
         setNivelPermitido(false);
@@ -339,8 +342,14 @@ export default function PanelEventos() {
         </div>
         <select name="mostrar" value={evento.mostrar} onChange={handleChange} className="border p-2 rounded">
           <option value="publico">Público</option>
-          <option value="socios">Socios</option>
+          <option value="socios">Socios Rotary</option>
           <option value="junta">Junta</option>
+          <option value="rotaract">Rotaract</option>
+          <option value="interact">Interact</option>
+          <option value="socios,rotaract">Socios Rotary + Rotaract</option>
+          <option value="socios,interact">Socios Rotary + Interact</option>
+          <option value="rotaract,interact">Rotaract + Interact</option>
+          <option value="socios,rotaract,interact">Socios Rotary + Rotaract + Interact</option>
         </select>
         <label className="flex items-center gap-2">
           <input type="checkbox" name="repetir" checked={evento.repetir} onChange={handleCheckbox} />
@@ -375,6 +384,8 @@ export default function PanelEventos() {
         <button onClick={() => filtrarEventos({ mostrar: "publico" })} className="bg-blue-200 px-3 py-1 rounded text-sm">Público</button>
         <button onClick={() => filtrarEventos({ mostrar: "socios" })} className="bg-blue-200 px-3 py-1 rounded text-sm">Socios</button>
         <button onClick={() => filtrarEventos({ mostrar: "junta" })} className="bg-blue-200 px-3 py-1 rounded text-sm">Junta</button>
+        <button onClick={() => filtrarEventos({ mostrar: "rotaract" })} className="bg-blue-200 px-3 py-1 rounded text-sm">Rotaract</button>
+        <button onClick={() => filtrarEventos({ mostrar: "interact" })} className="bg-blue-200 px-3 py-1 rounded text-sm">Interact</button>
         <button onClick={cargarEventos} className="bg-green-300 px-3 py-1 rounded text-sm">Mostrar todos</button>
       </div>
 

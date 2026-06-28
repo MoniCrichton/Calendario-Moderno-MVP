@@ -140,21 +140,25 @@ useEffect(() => {
   };
 
   const puedeVerEvento = (mostrarRaw) => {
-    const nivelNormalizado = nivel?.toLowerCase()?.trim();
-    const mostrar = mostrarRaw?.toLowerCase()?.trim();
+  const nivelNormalizado = nivel?.toLowerCase()?.trim();
+  const gruposPermitidos = String(mostrarRaw || "publico")
+    .toLowerCase()
+    .split(",")
+    .map(g => g.trim());
 
-    console.log(`🕵️ Verificando visibilidad - Nivel: ${nivelNormalizado} | Mostrar: ${mostrar}`)
-    
-    if (nivelNormalizado === "junta") {
-      return mostrar === "junta" || mostrar === "socios" || mostrar === "publico";
-    }
+  if (gruposPermitidos.includes("publico")) return true;
 
-    if (nivelNormalizado === "socios") {
-      return mostrar === "socios" || mostrar === "publico";
-    }
+  if (nivelNormalizado === "junta") {
+    return (
+      gruposPermitidos.includes("junta") ||
+      gruposPermitidos.includes("socios") ||
+      gruposPermitidos.includes("rotaract") ||
+      gruposPermitidos.includes("interact")
+    );
+  }
 
-    return mostrar === "publico";
-  };
+  return gruposPermitidos.includes(nivelNormalizado);
+};
 
   return (
     <div className="relative p-4">

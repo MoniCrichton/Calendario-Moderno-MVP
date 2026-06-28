@@ -36,6 +36,7 @@ export default function PanelEventos() {
 
   const [usuario, setUsuario] = useState(null);
   const [nivelPermitido, setNivelPermitido] = useState(false);
+  const [nivelesUsuario, setNivelesUsuario] = useState([]);
   const [sinHora, setSinHora] = useState(false);
   const [eventos, setEventos] = useState([]);
   const [tiposEventos, setTiposEventos] = useState([]);
@@ -53,6 +54,7 @@ export default function PanelEventos() {
         const snap = await getDoc(docRef);
         const datos = snap.exists() ? snap.data() : {};
         const nivel = datos?.nivel || [];
+        setNivelesUsuario(nivel);
 
         const nivelesPermitidos = ["junta", "rotaract", "interact"];
 
@@ -258,6 +260,8 @@ export default function PanelEventos() {
     return encontrado ? encontrado.emoji : "";
   };
 
+
+
   const tiposUsados = Array.from(
     new Set(eventos.map((e) => (e.tipo || "").toLowerCase().trim()).filter(Boolean))
   ).sort();
@@ -303,6 +307,22 @@ export default function PanelEventos() {
     );
   }
 
+const opcionesMostrar = [
+  { value: "publico", label: "Público", niveles: ["junta", "rotaract", "interact"] },
+  { value: "socios", label: "Socios Rotary", niveles: ["junta"] },
+  { value: "junta", label: "Junta", niveles: ["junta"] },
+  { value: "rotaract", label: "Rotaract", niveles: ["junta", "rotaract"] },
+  { value: "interact", label: "Interact", niveles: ["junta", "interact"] },
+  { value: "socios,rotaract", label: "Socios Rotary + Rotaract", niveles: ["junta", "rotaract"] },
+  { value: "socios,interact", label: "Socios Rotary + Interact", niveles: ["junta", "interact"] },
+  { value: "rotaract,interact", label: "Rotaract + Interact", niveles: ["junta", "rotaract", "interact"] },
+  { value: "socios,rotaract,interact", label: "Socios Rotary + Rotaract + Interact", niveles: ["junta", "rotaract", "interact"] },
+];
+
+const opcionesMostrarDisponibles = opcionesMostrar.filter(opcion =>
+  opcion.niveles.some(n => nivelesUsuario.includes(n))
+);
+
   return (
     <div className="max-w-3xl mx-auto px-4 py-6">
       <div className="flex justify-between items-center mb-4">
@@ -341,16 +361,12 @@ export default function PanelEventos() {
           </label>
         </div>
         <select name="mostrar" value={evento.mostrar} onChange={handleChange} className="border p-2 rounded">
-          <option value="publico">Público</option>
-          <option value="socios">Socios Rotary</option>
-          <option value="junta">Junta</option>
-          <option value="rotaract">Rotaract</option>
-          <option value="interact">Interact</option>
-          <option value="socios,rotaract">Socios Rotary + Rotaract</option>
-          <option value="socios,interact">Socios Rotary + Interact</option>
-          <option value="rotaract,interact">Rotaract + Interact</option>
-          <option value="socios,rotaract,interact">Socios Rotary + Rotaract + Interact</option>
-        </select>
+  {opcionesMostrarDisponibles.map((opcion) => (
+    <option key={opcion.value} value={opcion.value}>
+      {opcion.label}
+    </option>
+  ))}
+</select>
         <label className="flex items-center gap-2">
           <input type="checkbox" name="repetir" checked={evento.repetir} onChange={handleCheckbox} />
           Repetir evento

@@ -28,6 +28,18 @@ const views = {
     name: "Estado de Cuenta",
     short_name: "Cuenta",
   },
+  rotaract: {
+    html: "index.html",
+    start_url: "/",
+    name: "Calendario Rotaract",
+    short_name: "Rotaract",
+  },
+  interact: {
+    html: "index.html",
+    start_url: "/",
+    name: "Calendario Interact",
+    short_name: "Interact",
+},
 };
 
 // Detectar la vista actual desde variable de entorno

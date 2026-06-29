@@ -56,13 +56,13 @@ export default function Calendario({ nivel = "publico" }) {
           eventosCargados.push({ id: doc.id, ...e, fechaObj: fecha });
         });
 
-        console.log("Nivel:", nivel);
-        console.log("Eventos cargados:", eventosCargados);
+
 
         setEventos(eventosCargados);
       } catch (error) {
-        console.error("Error al cargar eventos:", error);
-      }
+  console.error("Error al cargar eventos:", error);
+  alert("Error al cargar eventos: " + error.message);
+}
     }
 
     fetchEventos();

@@ -160,9 +160,6 @@ useEffect(() => {
 };
 
   
-  return gruposPermitidos.includes(nivelNormalizado);
-};
-
   return (
     <div className="relative p-4">
       <div className="text-xs bg-yellow-100 p-2 mb-2">

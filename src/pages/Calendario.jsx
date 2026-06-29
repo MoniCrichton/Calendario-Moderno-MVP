@@ -156,6 +156,10 @@ useEffect(() => {
     return true;
   }
 
+  if (gruposPermitidos.includes("publico")) {
+    return true;
+  }
+
   return gruposPermitidos.includes(nivelNormalizado);
 };
 

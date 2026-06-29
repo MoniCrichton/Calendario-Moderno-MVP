@@ -24,6 +24,7 @@ export default function Calendario({ nivel = "publico" }) {
   const [estilosPorTipo, setEstilosPorTipo] = useState({});
   const [actualizado, setActualizado] = useState(false);
   const [esCelular, setEsCelular] = useState(window.innerWidth < 640);
+  const [debugInfo, setDebugInfo] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -56,7 +57,7 @@ export default function Calendario({ nivel = "publico" }) {
           eventosCargados.push({ id: doc.id, ...e, fechaObj: fecha });
         });
 
-
+setDebugInfo(`Nivel: ${nivel} | Eventos cargados: ${eventosCargados.length}`);
 
         setEventos(eventosCargados);
       } catch (error) {
@@ -165,6 +166,9 @@ useEffect(() => {
 
   return (
     <div className="relative p-4">
+      <div className="text-xs bg-yellow-100 p-2 mb-2">
+        {debugInfo}
+      </div>
       {nivel === "junta" && (
         <button
           onClick={() => navigate("/admin")}

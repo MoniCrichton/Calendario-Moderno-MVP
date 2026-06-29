@@ -159,15 +159,7 @@ useEffect(() => {
   return gruposPermitidos.includes(nivelNormalizado);
 };
 
-  if (nivelNormalizado === "junta") {
-    return (
-      gruposPermitidos.includes("junta") ||
-      gruposPermitidos.includes("socios") ||
-      gruposPermitidos.includes("rotaract") ||
-      gruposPermitidos.includes("interact")
-    );
-  }
-
+  
   return gruposPermitidos.includes(nivelNormalizado);
 };
 

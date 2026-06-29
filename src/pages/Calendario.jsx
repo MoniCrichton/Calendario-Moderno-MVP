@@ -145,12 +145,19 @@ useEffect(() => {
 
   const puedeVerEvento = (mostrarRaw) => {
   const nivelNormalizado = nivel?.toLowerCase()?.trim();
+
   const gruposPermitidos = String(mostrarRaw || "publico")
     .toLowerCase()
-    .split(",")
-    .map(g => g.trim());
+    .replace("socios rotary", "socios")
+    .split(/[,|-]/)
+    .map((g) => g.trim());
 
-  if (gruposPermitidos.includes("publico")) return true;
+  if (nivelNormalizado === "junta") {
+    return true;
+  }
+
+  return gruposPermitidos.includes(nivelNormalizado);
+};
 
   if (nivelNormalizado === "junta") {
     return (

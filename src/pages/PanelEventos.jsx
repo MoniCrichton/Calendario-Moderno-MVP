@@ -220,7 +220,7 @@ const handleSubmit = async (e) => {
       const docRef = doc(db, "eventos", evento.id);
       await updateDoc(docRef, eventoFinal);
 
-      alert("Evento modificado correctamente");
+  
     }
 
     // 2. EVENTO NUEVO SIN REPETICIÓN
@@ -237,7 +237,7 @@ const handleSubmit = async (e) => {
 
       await addDoc(collection(db, "eventos"), eventoFinal);
 
-      alert("Evento agregado correctamente");
+
     }
 
     // 3. EVENTO NUEVO CON REPETICIÓN
@@ -292,7 +292,6 @@ const handleSubmit = async (e) => {
 
       await Promise.all(batch);
 
-      alert(`Se agregaron ${fechas.length} eventos repetidos.`);
     }
 
     setEvento({
@@ -373,6 +372,16 @@ const handleSubmit = async (e) => {
     setBusqueda("");
     setTimeout(() => resultadosRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
   };
+
+
+  const mostrarTodosLosEventos = () => {
+  setEventosFiltrados(eventos);
+  setMostrarResultados(true);
+
+  setTimeout(() => {
+    resultadosRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, 50);
+};
 
   const filtrarPorBusqueda = () => {
     const texto = busqueda.toLowerCase();
@@ -521,7 +530,7 @@ const opcionesMostrarDisponibles = opcionesMostrar.filter(opcion =>
         <button onClick={() => filtrarEventos({ mostrar: "junta" })} className="bg-blue-200 px-3 py-1 rounded text-sm">Junta</button>
         <button onClick={() => filtrarEventos({ mostrar: "rotaract" })} className="bg-blue-200 px-3 py-1 rounded text-sm">Rotaract</button>
         <button onClick={() => filtrarEventos({ mostrar: "interact" })} className="bg-blue-200 px-3 py-1 rounded text-sm">Interact</button>
-        <button onClick={cargarEventos} className="bg-green-300 px-3 py-1 rounded text-sm">Mostrar todos</button>
+        <button onClick={mostrarTodosLosEventos} className="bg-green-300 px-3 py-1 rounded text-sm">Mostrar todos</button>
       </div>
 
       <div className="mb-4 text-center">

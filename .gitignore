@@ -28,4 +28,5 @@ dist-ssr
 .env.tesoreria
 .env.cuenta
 
-
+# Códigos de recuperación - no subir a GitHub
+recovery-codes.txt

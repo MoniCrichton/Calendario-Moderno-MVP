@@ -13,6 +13,7 @@ export default function App({ nivel }) {
       <Routes>
        <Route path="/login" element={<Login />} />
        <Route path="/" element={<Home nivel={nivel} />} />
+       <Route path="/calendario-junta.html" element={<Home nivel={nivel} />} />
 
 
         {/* Esta ruta usa el nivel que viene como prop desde main-socios.jsx, main-junta.jsx, etc. */}

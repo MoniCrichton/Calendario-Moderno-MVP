@@ -39,12 +39,14 @@ export default function PanelEventos() {
   const [nivelesUsuario, setNivelesUsuario] = useState([]);
   const [sinHora, setSinHora] = useState(false);
   const [eventos, setEventos] = useState([]);
+  const [eventosConProblemas, setEventosConProblemas] = useState([]);
   const [tiposEventos, setTiposEventos] = useState([]);
   const [eventosFiltrados, setEventosFiltrados] = useState([]);
   const [busqueda, setBusqueda] = useState("");
   const [mostrarResultados, setMostrarResultados] = useState(false);
   const resultadosRef = useRef(null);
   const navigate = useNavigate();
+  
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -91,35 +93,82 @@ export default function PanelEventos() {
       .then(() => alert("Sesión cerrada"))
       .catch((error) => alert("Error: " + error.message));
   };
+const cargarEventos = async () => {
+  const q = query(collection(db, "eventos"));
+  const querySnapshot = await getDocs(q);
 
-  const cargarEventos = async () => {
-    const q = query(collection(db, "eventos"));
-    const querySnapshot = await getDocs(q);
-    const lista = [];
-    querySnapshot.forEach((docSnap) => {
-      const data = docSnap.data();
-      let fechaObj;
-      if (data.fecha && typeof data.fecha === "object" && data.fecha.toDate) {
-        fechaObj = data.fecha.toDate();
-      } else if (typeof data.fecha === "string") {
-        const [anio, mes, dia] = data.fecha.split("-").map(Number);
-        if (anio && mes && dia) {
-          fechaObj = new Date(anio, mes - 1, dia, 12);
-        } else {
-          console.warn("Fecha inválida:", data.fecha);
-          return;
-        }
+  const lista = [];
+  const problemas = [];
+
+  querySnapshot.forEach((docSnap) => {
+    const data = docSnap.data();
+    let fechaObj;
+
+    if (data.fecha && typeof data.fecha === "object" && data.fecha.toDate) {
+      fechaObj = data.fecha.toDate();
+
+    } else if (typeof data.fecha === "string") {
+      const [anio, mes, dia] = data.fecha.split("-").map(Number);
+
+      if (anio && mes && dia) {
+        fechaObj = new Date(anio, mes - 1, dia, 12);
       } else {
-        console.warn("Evento sin fecha:", docSnap.id);
+        console.warn("Fecha inválida:", data.fecha);
+
+        problemas.push({
+          ...data,
+          id: docSnap.id,
+          titulo: data.titulo || "Evento sin título",
+          tipo: data.tipo || "",
+          detalles: data.detalles || "",
+          fecha: "",
+          horaInicio: data.horaInicio || "",
+          horaFin: data.horaFin || "",
+          mostrar: data.mostrar || "publico",
+          repetir: Boolean(data.repetir),
+          frecuencia: data.frecuencia || "",
+          hasta: data.hasta || ""
+        });
+
         return;
       }
-     lista.push({ ...data, id: docSnap.id, fecha: fechaObj.toISOString().split("T")[0] });
+
+    } else {
+      console.warn("Evento sin fecha:", docSnap.id);
+
+      problemas.push({
+        ...data,
+        id: docSnap.id,
+        titulo: data.titulo || "Evento sin título",
+        tipo: data.tipo || "",
+        detalles: data.detalles || "",
+        fecha: "",
+        horaInicio: data.horaInicio || "",
+        horaFin: data.horaFin || "",
+        mostrar: data.mostrar || "publico",
+        repetir: Boolean(data.repetir),
+        frecuencia: data.frecuencia || "",
+        hasta: data.hasta || ""
+      });
+
+      return;
+    }
+
+    lista.push({
+      ...data,
+      id: docSnap.id,
+      fecha: fechaObj.toISOString().split("T")[0]
     });
-    lista.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
-    setEventos(lista);
-    setEventosFiltrados([]);
-    setMostrarResultados(false);
-  };
+  });
+
+  lista.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+
+  setEventos(lista);
+  setEventosConProblemas(problemas);
+  setEventosFiltrados([]);
+  setMostrarResultados(false);
+};
+
 
   const cargarTipos = async () => {
     try {
@@ -478,6 +527,41 @@ const opcionesMostrarDisponibles = opcionesMostrar.filter(opcion =>
       <div className="mb-4 text-center">
         <input type="text" placeholder="Buscar evento..." value={busqueda}onChange={handleBusqueda} className="border p-2 rounded w-full max-w-md" />
       </div>
+
+      {eventosConProblemas.length > 0 && (
+        <div className="mb-6 border border-yellow-400 bg-yellow-50 rounded p-4">
+          <h2 className="font-bold text-lg mb-3">
+            ⚠️ Eventos con datos incompletos
+          </h2>
+
+          <div className="space-y-3">
+            {eventosConProblemas.map((e) => (
+              <div key={e.id} className="border bg-white p-3 rounded">
+                <div className="font-semibold">
+                  {e.titulo}
+                </div>
+
+                <div className="text-sm text-red-600 mt-1">
+                  Falta la fecha
+                </div>
+
+                {e.detalles && (
+                  <div className="text-sm text-gray-500 mt-1">
+                    {e.detalles}
+                  </div>
+                )}
+
+                <button
+                  onClick={() => editarEvento(e)}
+                  className="bg-yellow-400 px-3 py-1 rounded text-sm mt-2"
+                >
+                  Editar
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div ref={resultadosRef} />
       {mostrarResultados && (

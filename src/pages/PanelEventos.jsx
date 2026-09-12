@@ -317,10 +317,23 @@ const handleSubmit = async (e) => {
 };
 
   const editarEvento = (evento) => {
-  setEvento(evento);
-  setSinHora(!evento.horaInicio && !evento.horaFin);
-  window.scrollTo({ top: 0, behavior: "smooth" });
-};
+    setEvento({
+      id: evento.id,
+      titulo: evento.titulo || "",
+      tipo: evento.tipo || "",
+      detalles: evento.detalles || "",
+      fecha: evento.fecha || "",
+      horaInicio: evento.horaInicio || "",
+      horaFin: evento.horaFin || "",
+      mostrar: evento.mostrar || "publico",
+      repetir: Boolean(evento.repetir),
+      frecuencia: evento.frecuencia || "",
+      hasta: evento.hasta || ""
+    });
+
+    setSinHora(!evento.horaInicio && !evento.horaFin);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   const eliminarEvento = async (id) => {
     if (!id) return alert("ID inválido para eliminar el evento.");
@@ -462,7 +475,7 @@ const opcionesMostrarDisponibles = opcionesMostrar.filter(opcion =>
       
       <form onSubmit={handleSubmit} className="grid gap-3 mb-6">
         <input type="text" name="titulo" placeholder="Título" value={evento.titulo} onChange={handleChange} className="border p-2 rounded" required />
-        <select name="tipo" value={evento.tipo} onChange={handleChange} className="border p-2 rounded" required>
+        <select name="tipo" value={evento.tipo} onChange={handleChange} className="border p-2 rounded">
           <option value="">Seleccionar tipo...</option>
           {tiposEventos.slice().sort((a, b) => a.tipo.localeCompare(b.tipo)).map((t) => (
             <option key={t.tipo} value={t.tipo}>{t.emoji} {t.tipo}</option>
